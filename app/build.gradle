@@ -1,0 +1,73 @@
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+}
+
+android {
+    compileSdkVersion 29
+
+    defaultConfig {
+        applicationId "com.codies.xenox"
+        minSdkVersion 21
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+
+        android.defaultConfig.vectorDrawables.useSupportLibrary = true
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    //firebase
+    implementation 'com.google.firebase:firebase-auth:20.0.0'
+    implementation 'com.google.firebase:firebase-database:19.5.1'
+    implementation 'com.google.firebase:firebase-storage:19.2.0'
+    implementation 'com.google.firebase:firebase-core:18.0.0'
+
+    //Gson for serializing
+    implementation 'com.google.code.gson:gson:2.8.5'
+
+    //add cardview
+    implementation 'androidx.cardview:cardview:1.0.0'
+
+    //muldidex
+    implementation 'com.android.support:multidex:1.0.3'
+
+    //Circle ImageView
+    implementation 'com.mikhaellopez:circularimageview:4.1.0'
+
+    //quickblox videocall sdk
+    implementation "com.quickblox:quickblox-android-sdk-messages:3.9.2"
+    implementation "com.quickblox:quickblox-android-sdk-chat:3.9.2"
+    implementation "com.quickblox:quickblox-android-sdk-content:3.9.2"
+    implementation "com.quickblox:quickblox-android-sdk-videochat-webrtc:3.9.2"
+    implementation "com.quickblox:quickblox-android-sdk-conference:3.9.2"
+    implementation "com.quickblox:quickblox-android-sdk-customobjects:3.9.2"
+
+    //glide for cache image
+    implementation 'com.github.bumptech.glide:glide:4.10.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.10.0'
+    implementation 'com.mikhaellopez:circularimageview:4.1.0'
+
+
+    testImplementation 'junit:junit:4.13.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+}
