@@ -53,6 +53,9 @@ dependencies {
     //Circle ImageView
     implementation 'com.mikhaellopez:circularimageview:4.1.0'
 
+    //device info
+    implementation 'com.an.deviceinfo:deviceinfo:0.1.5'
+
     //quickblox videocall sdk
     implementation "com.quickblox:quickblox-android-sdk-messages:3.9.2"
     implementation "com.quickblox:quickblox-android-sdk-chat:3.9.2"

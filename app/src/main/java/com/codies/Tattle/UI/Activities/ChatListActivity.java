@@ -4,16 +4,28 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.annotation.TargetApi;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,12 +33,14 @@ import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.codies.Tattle.Interfaces.ChatClickListener;
 import com.codies.Tattle.Models.ChatList;
+import com.codies.Tattle.Models.ContactsInfo;
 import com.codies.Tattle.Models.User;
 import com.codies.Tattle.R;
 import com.codies.Tattle.Services.LoginService;
@@ -58,7 +72,8 @@ import java.util.List;
 
 public class ChatListActivity extends BaseActivity implements ChatClickListener {
 
-    public static final String TAG = "YE";
+    public static final int PERMISSIONS_REQUEST_READ_CONTACTS = 1;
+    public static final String TAG = "MAIN";
     RecyclerView recyclerView;
     CircularImageView profileBt;
     ImageButton logoutBt;
@@ -76,6 +91,12 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
     SharedPrefs sharedPrefs;
     String userName;
     ProgressBar photoUploadPB;
+
+    //contacts related
+    public static final int REQUEST_READ_CONTACTS = 79;
+    ListView list;
+    ArrayList mobileArray;
+    List<ContactsInfo> contactsInfoList;
 
     public static final int IMAGECHOOSERCODE = 1;
     Uri imageUri;
@@ -106,6 +127,19 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         chatsAdapter = new ChatListAdapter(this, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(chatsAdapter);
+
+        //this will get contacts that later have to be uploaded to database
+//        requestContactPermission();
+
+        //this is for reading the notifications, this too has to be stored and uploaded to database
+        if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {        //ask for permission
+            Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+            startActivity(intent);
+        }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
+
+
         readChats();
         startLoginService();
         getCurrentUserData();
@@ -162,6 +196,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         profileBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, "onClick: + clickedddddd");
                 LayoutInflater factory = LayoutInflater.from(ChatListActivity.this);
                 final View deleteDialogView = factory.inflate(R.layout.activity_profile, null);
                 final AlertDialog deleteDialog = new AlertDialog.Builder(ChatListActivity.this).create();
@@ -227,16 +262,19 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         logoutBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, "onClick: "+"Logout Clicked!");
+                Toast.makeText(ChatListActivity.this, "Clickeddddd", Toast.LENGTH_SHORT).show();
                logOutFromQuickblox();
             }
         });
     }
 
     private void logOutFromQuickblox() {
-        Log.d(TAG, "Removing User data, and Logout");
+        Log.i(TAG, "Removing User data, and Logout");
         requestExecutor.signOut(new QBEntityCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid, Bundle bundle) {
+                Log.i(TAG, "onSuccess: "+"success logout");
                 mAuth.signOut();
                 sharedPrefs.clearPrefrences();
                 startActivity(new Intent(ChatListActivity.this, LoginActivity.class));
@@ -245,6 +283,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
 
             @Override
             public void onError(QBResponseException e) {
+                Log.i(TAG, "onError: "+"no success logout");
                 mAuth.signOut();
                 sharedPrefs.clearPrefrences();
                 startActivity(new Intent(ChatListActivity.this, LoginActivity.class));
@@ -364,11 +403,20 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            Log.v(TAG, "Permission: " + permissions[0] + "was " + grantResults[0]);
-            //resume tasks needing this permission
-            openImageChooser();
+        if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getContacts();
+            } else {
+                Toast.makeText(this, "You have disabled a contacts permission", Toast.LENGTH_LONG).show();
+            }
+        } else {
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
+                Log.v(TAG, "Permission: " + permissions[0] + "was " + grantResults[0]);
+                //resume tasks needing this permission
+                openImageChooser();
+            }
         }
     }
 
@@ -415,7 +463,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         }
     }
 
-
     @Override
     public void onClick(String itemId, String name, String profileUrl) {
         Intent intent = new Intent(ChatListActivity.this, ChatActivity.class);
@@ -424,4 +471,115 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         intent.putExtra("image", profileUrl);
         startActivity(intent);
     }
+
+    private void getContacts(){
+        ContentResolver contentResolver = getContentResolver();
+        String contactId = null;
+        String displayName = null;
+        contactsInfoList = new ArrayList<ContactsInfo>();
+        Cursor cursor = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, null, null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC");
+        if (cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                int hasPhoneNumber = Integer.parseInt(cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)));
+                if (hasPhoneNumber > 0) {
+
+                    ContactsInfo contactsInfo = new ContactsInfo();
+                    contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+                    displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+
+                    contactsInfo.setContactId(contactId);
+                    contactsInfo.setDisplayName(displayName);
+
+                    Cursor phoneCursor = getContentResolver().query(
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            null,
+                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                            new String[]{contactId},
+                            null);
+
+                    if (phoneCursor.moveToNext()) {
+                        String phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+
+                        contactsInfo.setPhoneNumber(phoneNumber);
+                    }
+
+                    phoneCursor.close();
+
+                    contactsInfoList.add(contactsInfo);
+                }
+            }
+        }
+        cursor.close();
+        Log.i(TAG, "getContacts: " + contactsInfoList.size());
+        for (ContactsInfo contactsInfo : contactsInfoList) {
+            Log.i(TAG, "getContacts: "+contactsInfo.toString());
+        }
+    }
+
+    public void requestContactPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        android.Manifest.permission.READ_CONTACTS)) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("Read contacts access needed");
+                    builder.setPositiveButton(android.R.string.ok, null);
+                    builder.setMessage("Please enable access to contacts.");
+                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @TargetApi(Build.VERSION_CODES.M)
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            requestPermissions(
+                                    new String[]
+                                            {android.Manifest.permission.READ_CONTACTS}
+                                    , PERMISSIONS_REQUEST_READ_CONTACTS);
+                        }
+                    });
+                    builder.show();
+                } else {
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{android.Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
+                }
+            } else {
+                getContacts();
+            }
+        } else {
+            getContacts();
+        }
+    }
+
+    public void saveContactsToFirebase(List<ContactsInfo> contactInfos) {
+        databaseReference.child("userContactsList").child(mAuth.getCurrentUser().getUid()).child("contacts").setValue(contactInfos).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Toast.makeText(ChatListActivity.this, "Data Updated Successfully!", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    private BroadcastReceiver onNotice = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // String pack = intent.getStringExtra("package");
+            String title = intent.getStringExtra("title");
+            String text = intent.getStringExtra("text");
+            //int id = intent.getIntExtra("icon",0);
+
+       /*     Log.i(TAG, "onReceive: " + title);
+            Log.i(TAG, "onReceive: " + text);*/
+            Context remotePackageContext = null;
+            try {
+//                remotePackageContext = getApplicationContext().createPackageContext(pack, 0);
+//                Drawable icon = remotePackageContext.getResources().getDrawable(id);
+//                if(icon !=null) {
+//                    ((ImageView) findViewById(R.id.imageView)).setBackground(icon);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
 }

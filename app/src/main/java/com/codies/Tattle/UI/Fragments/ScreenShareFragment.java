@@ -45,10 +45,10 @@ public class ScreenShareFragment extends BaseToolBarFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = super.onCreateView(inflater, container, savedInstanceState);
 
-        ImagesAdapter adapter = new ImagesAdapter(getChildFragmentManager());
+        /*ImagesAdapter adapter = new ImagesAdapter(getChildFragmentManager());
 
         ViewPager pager = (ViewPager) view.findViewById(R.id.pager);
-        pager.setAdapter(adapter);
+        pager.setAdapter(adapter);*/
 
         toolbar.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.white));
         return view;

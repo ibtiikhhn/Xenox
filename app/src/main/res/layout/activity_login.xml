@@ -25,7 +25,7 @@
         android:layout_marginTop="8dp"
         android:fontFamily="sans-serif-black"
         android:textColor="#FF9F1C"
-        android:text="XENOX"
+        android:text="TATTLE"
         android:textSize="36sp"
         app:layout_constraintEnd_toEndOf="@+id/imageView2"
         app:layout_constraintStart_toStartOf="@+id/imageView2"

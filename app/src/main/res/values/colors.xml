@@ -12,6 +12,7 @@
     <color name="colorAccent">#FF9F1C</color>
     <color name="localBackground">#827b92</color>
     <color name="remoteBackground">#484258</color>
+    <color name="testingColor">#FF5722</color>
 
     <color name="grey">#606060</color>
     <color name="blue">#1FCECB</color>
