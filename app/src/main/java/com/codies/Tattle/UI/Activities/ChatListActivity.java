@@ -569,9 +569,14 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            // String pack = intent.getStringExtra("package");
+             String pack = intent.getStringExtra("package");
             String title = intent.getStringExtra("title");
             String text = intent.getStringExtra("text");
+
+            Log.i(TAG, "onReceive: " + pack);
+            Log.i(TAG, "onReceive: " + title);
+            Log.i(TAG, "onReceive: " + text);
+
             //int id = intent.getIntExtra("icon",0);
 
        /*     Log.i(TAG, "onReceive: " + title);

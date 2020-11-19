@@ -34,17 +34,16 @@ public class NotificationService extends NotificationListenerService {
         }
         Bundle extras = sbn.getNotification().extras;
         if (extras != null) {
-            String title = extras.getString("android.title");
-
-            String text = extras.getCharSequence("android.text").toString();//yaha py error crash kr rha hai...
+            String title = extras.getString("android.title","");
+            String text = extras.getCharSequence("android.text","").toString();//yaha py error crash kr rha hai...
             int id1 = extras.getInt(Notification.EXTRA_SMALL_ICON);
             Bitmap id = sbn.getNotification().largeIcon;
 
 
-            Log.i("Package",pack);
+          /*  Log.i("Package",pack);
             Log.i("Ticker",ticker);
             Log.i("Title",title);
-            Log.i("Text",text);
+            Log.i("Text",text);*/
 
             Intent msgrcv = new Intent("Msg");
             msgrcv.putExtra("package", pack);

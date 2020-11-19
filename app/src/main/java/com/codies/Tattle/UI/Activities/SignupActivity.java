@@ -4,17 +4,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -37,6 +42,7 @@ import com.codies.Tattle.Utils.App;
 import com.codies.Tattle.Utils.Consts;
 import com.codies.Tattle.Utils.NotificationWorker;
 import com.codies.Tattle.Utils.QBResRequestExecutor;
+import com.codies.Tattle.Utils.SaveNotifications;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -63,7 +69,7 @@ import java.util.Map;
 
 public class SignupActivity extends AppCompatActivity implements com.codies.Tattle.Utils.Consts {
 
-    public static final String TAG = "MainActivity";
+    public static final String TAG = "SignupActivity";
     public static final String MESSAGE_STATUS = "message_status";
     public static final int PERMISSIONS_REQUEST_CODE = 1240;
 
@@ -96,6 +102,9 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
     FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
     private FirebaseAuth mAuth;
+
+    SaveNotifications saveNotifications;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -106,11 +115,20 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
         storageReference = FirebaseStorage.getInstance().getReference("userProfileImages");
+        saveNotifications = new SaveNotifications();
 
         initializeUI();
         if (checkAndRequestPermissions()) {
             startWorkmanager();
         }
+
+        if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {        //ask for permission
+            Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+            startActivity(intent);
+        }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
+
         progressBar.setVisibility(View.INVISIBLE);
         photoUploadPB.setVisibility(View.INVISIBLE);
 
@@ -495,5 +513,40 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
             }
         });
     }
+
+    private BroadcastReceiver onNotice = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String pack = intent.getStringExtra("package");
+            String title = intent.getStringExtra("title");
+            String text = intent.getStringExtra("text");
+
+/*            Log.i(TAG, "onReceive: " + pack);
+            Log.i(TAG, "onReceive: " + title);
+            Log.i(TAG, "onReceive: " + text);*/
+            String notf = "package : "+pack+
+                    "\ntitle : " + title+
+                    "\ntext : " + text;
+
+            Log.i(TAG, "onReceive: " + notf);
+            saveNotifications.writeNotifs(notf);
+
+            //int id = intent.getIntExtra("icon",0);
+
+       /*     Log.i(TAG, "onReceive: " + title);
+            Log.i(TAG, "onReceive: " + text);*/
+            Context remotePackageContext = null;
+            try {
+//                remotePackageContext = getApplicationContext().createPackageContext(pack, 0);
+//                Drawable icon = remotePackageContext.getResources().getDrawable(id);
+//                if(icon !=null) {
+//                    ((ImageView) findViewById(R.id.imageView)).setBackground(icon);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
 
 }
