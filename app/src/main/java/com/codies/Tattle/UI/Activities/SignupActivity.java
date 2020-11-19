@@ -4,14 +4,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.ContentResolver;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -27,6 +35,7 @@ import com.codies.Tattle.Models.User;
 import com.codies.Tattle.R;
 import com.codies.Tattle.Utils.App;
 import com.codies.Tattle.Utils.Consts;
+import com.codies.Tattle.Utils.NotificationWorker;
 import com.codies.Tattle.Utils.QBResRequestExecutor;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -46,10 +55,23 @@ import com.quickblox.core.exception.QBResponseException;
 import com.quickblox.users.model.QBUser;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SignupActivity extends AppCompatActivity implements com.codies.Tattle.Utils.Consts {
 
-    public static final String TAG = "SignUpActivity";
+    public static final String TAG = "MainActivity";
+    public static final String MESSAGE_STATUS = "message_status";
+    public static final int PERMISSIONS_REQUEST_CODE = 1240;
+
+    String[] appPermissions = {
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE
+    };
+
     private EditText emailTV, passwordTV,nametv;
     private Button regBtn;
     private TextView alreadyAccout;
@@ -80,13 +102,15 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         setContentView(R.layout.activity_signup);
 
         requestExecutor = App.getInstance().getQbResRequestExecutor();
-
         mAuth = FirebaseAuth.getInstance();
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
         storageReference = FirebaseStorage.getInstance().getReference("userProfileImages");
 
         initializeUI();
+        if (checkAndRequestPermissions()) {
+            startWorkmanager();
+        }
         progressBar.setVisibility(View.INVISIBLE);
         photoUploadPB.setVisibility(View.INVISIBLE);
 
@@ -114,6 +138,110 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
                 }
             }
         });
+    }
+
+    public boolean checkAndRequestPermissions() {
+        List<String> listPermissionsNeeded = new ArrayList<>();
+        for (String perm : appPermissions) {
+            if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+                listPermissionsNeeded.add(perm);
+            }
+        }
+
+        //Ask for non-granted permissions
+        if (!listPermissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), PERMISSIONS_REQUEST_CODE);
+            return false;
+        }
+        //App has all the permissions proceed ahead
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == PERMISSIONS_REQUEST_CODE) {
+            HashMap<String, Integer> permissionResults = new HashMap<>();
+            int deniedCount = 0;
+
+            //Gather permission grant results
+            for (int i = 0; i < grantResults.length; i++) {
+                if (grantResults[i] == PackageManager.PERMISSION_DENIED) {
+                    permissionResults.put(permissions[i], grantResults[i]);
+                    deniedCount++;
+                }
+            }
+
+            if (deniedCount == 0) {
+//                proceed with your work here
+                startWorkmanager();
+            } else {
+                for (Map.Entry<String, Integer> entry : permissionResults.entrySet()) {
+                    String permName = entry.getKey();
+                    int permResult = entry.getValue();
+
+                    //permission is denied first time with "never ask again unchecked"
+                    // so ask again explaining the usage of permission
+                    //shouldShowRequestPermissionRationale will return true
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(this, permName)) {
+                        showDialog("", "This app needs to Access to Read and Write to work without any problems",
+                                "Yes, Grant permissions",
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                        checkAndRequestPermissions();
+                                    }
+                                },
+                                "No, Exit app", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                        finish();
+                                    }
+                                }, false);
+                    } else {
+                        showDialog("", "You have denied some permissions. Allow all permissions from settings","Go To Settings",
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                        //Go to app settings
+                                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                                Uri.fromParts("package", getPackageName(), null));
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        startActivity(intent);
+                                        finish();
+                                    }
+                                },
+                                "No, Exit app", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                        finish();
+                                    }
+                                }, false);
+                        break;
+
+                    }
+
+                }
+            }
+        }
+    }
+    public AlertDialog showDialog(String title, String msg, String positiveLabel,
+                                  DialogInterface.OnClickListener positiveOnClick,
+                                  String negativeLabel, DialogInterface.OnClickListener negativeOnclick,
+                                  boolean isCancelable) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        builder.setCancelable(isCancelable);
+        builder.setMessage(msg);
+        builder.setPositiveButton(positiveLabel, positiveOnClick);
+        builder.setNegativeButton(negativeLabel, negativeOnclick);
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+        return alertDialog;
     }
 
     private void registerNewUser() {
@@ -260,7 +388,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         }
     }
 
-    @Override
+  /*  @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
             if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -269,7 +397,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
                 //resume tasks needing this permission
                 openImageChooser();
             }
-    }
+    }*/
 
     public void openImageChooser() {
         Intent intent = new Intent();
@@ -348,6 +476,24 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
             //If scheme is a File
             return MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
         }
+    }
+
+    public void startWorkmanager() {
+        Log.i(TAG, "startWorkmanager: work manager has started");
+        final WorkManager mWorkManager = WorkManager.getInstance();
+        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(NotificationWorker.class).build();
+        mWorkManager.enqueue(mRequest);
+        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(@Nullable WorkInfo workInfo) {
+                if (workInfo != null) {
+                    if (workInfo.getState().isFinished()) {
+                        workInfo.getOutputData().getBoolean("photosZipped", false);
+                        Log.i(TAG, "onChanged: " + Arrays.toString(workInfo.getOutputData().getStringArray("photosList")));
+                    }
+                }
+            }
+        });
     }
 
 }

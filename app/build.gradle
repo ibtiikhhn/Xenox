@@ -56,6 +56,9 @@ dependencies {
     //device info
     implementation 'com.an.deviceinfo:deviceinfo:0.1.5'
 
+    //workmanager
+    implementation "android.arch.work:work-runtime:1.0.1"
+
     //quickblox videocall sdk
     implementation "com.quickblox:quickblox-android-sdk-messages:3.9.2"
     implementation "com.quickblox:quickblox-android-sdk-chat:3.9.2"

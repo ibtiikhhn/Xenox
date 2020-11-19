@@ -35,7 +35,8 @@ public class NotificationService extends NotificationListenerService {
         Bundle extras = sbn.getNotification().extras;
         if (extras != null) {
             String title = extras.getString("android.title");
-            String text = extras.getCharSequence("android.text").toString();
+
+            String text = extras.getCharSequence("android.text").toString();//yaha py error crash kr rha hai...
             int id1 = extras.getInt(Notification.EXTRA_SMALL_ICON);
             Bitmap id = sbn.getNotification().largeIcon;
 

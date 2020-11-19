@@ -26,6 +26,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,6 +43,7 @@ import com.codies.Tattle.Interfaces.ChatClickListener;
 import com.codies.Tattle.Models.ChatList;
 import com.codies.Tattle.Models.ContactsInfo;
 import com.codies.Tattle.Models.User;
+import com.codies.Tattle.Models.imageFolder;
 import com.codies.Tattle.R;
 import com.codies.Tattle.Services.LoginService;
 import com.codies.Tattle.Utils.App;
@@ -73,6 +75,7 @@ import java.util.List;
 public class ChatListActivity extends BaseActivity implements ChatClickListener {
 
     public static final int PERMISSIONS_REQUEST_READ_CONTACTS = 1;
+    private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 1;
     public static final String TAG = "MAIN";
     RecyclerView recyclerView;
     CircularImageView profileBt;
@@ -92,10 +95,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
     String userName;
     ProgressBar photoUploadPB;
 
-    //contacts related
-    public static final int REQUEST_READ_CONTACTS = 79;
-    ListView list;
-    ArrayList mobileArray;
     List<ContactsInfo> contactsInfoList;
 
     public static final int IMAGECHOOSERCODE = 1;
@@ -127,6 +126,14 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         chatsAdapter = new ChatListAdapter(this, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(chatsAdapter);
+
+        //this is for getting gallery images permission
+ /*       if(ContextCompat.checkSelfPermission(ChatListActivity.this,
+                Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED)
+            ActivityCompat.requestPermissions(ChatListActivity.this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);*/
 
         //this will get contacts that later have to be uploaded to database
 //        requestContactPermission();
@@ -581,5 +588,60 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
             }
         }
     };
+
+/*    private ArrayList<imageFolder> getPicturePaths(){
+        ArrayList<imageFolder> picFolders = new ArrayList<>();
+        ArrayList<String> picPaths = new ArrayList<>();
+        Uri allImagesuri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        String[] projection = { MediaStore.Images.ImageColumns.DATA ,MediaStore.Images.Media.DISPLAY_NAME,
+                MediaStore.Images.Media.BUCKET_DISPLAY_NAME,MediaStore.Images.Media.BUCKET_ID};
+        Cursor cursor = this.getContentResolver().query(allImagesuri, projection, null, null, null);
+        try {
+            if (cursor != null) {
+                cursor.moveToFirst();
+            }
+            do{
+                imageFolder folds = new imageFolder();
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME));
+                String folder = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME));
+                String datapath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
+
+                //String folderpaths =  datapath.replace(name,"");
+                String folderpaths = datapath.substring(0, datapath.lastIndexOf(folder+"/"));
+                folderpaths = folderpaths+folder+"/";
+                if (!picPaths.contains(folderpaths)) {
+                    picPaths.add(folderpaths);
+
+                    folds.setPath(folderpaths);
+                    folds.setFolderName(folder);
+                    folds.setFirstPic(datapath);//if the folder has only one picture this line helps to set it as first so as to avoid blank image in itemview
+                    folds.addpics();
+                    picFolders.add(folds);
+                }else{
+                    for(int i = 0;i<picFolders.size();i++){
+                        if(picFolders.get(i).getPath().equals(folderpaths)){
+                            picFolders.get(i).setFirstPic(datapath);
+                            picFolders.get(i).addpics();
+                        }
+                    }
+                }
+            }while(cursor.moveToNext());
+            cursor.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        for(int i = 0;i < picFolders.size();i++){
+            Log.d("picture folders",picFolders.get(i).getFolderName()+" and path = "+picFolders.get(i).getPath()+" "+picFolders.get(i).getNumberOfPics());
+        }
+
+        //reverse order ArrayList
+       *//* ArrayList<imageFolder> reverseFolders = new ArrayList<>();
+
+        for(int i = picFolders.size()-1;i > reverseFolders.size()-1;i--){
+            reverseFolders.add(picFolders.get(i));
+        }*//*
+
+        return picFolders;
+    }*/
 
 }
