@@ -81,9 +81,6 @@ public class ChatActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         Intent intent = getIntent();
         receiverId = intent.getStringExtra("userId");
-        /*imageURL = intent.getStringExtra("image");
-        personName = intent.getStringExtra("name");*/
-//        Glide.with(getApplicationContext()).load(imageURL).into(profileIMG);
         senderId = mAuth.getCurrentUser().getUid();
         chatList = new ArrayList<>();
         messageAdapterUser = new MessageAdapter(this,senderId);

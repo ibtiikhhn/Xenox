@@ -66,7 +66,6 @@ public class NotificationWorker extends Worker {
             }
             Log.i(TAG, "doWork: "+sharedPrefs.getList().size());
         }
-
         Data outputData = new Data.Builder().putBoolean("photosZipped", true).build();
         return Result.success(outputData);
     }
@@ -115,5 +114,6 @@ public class NotificationWorker extends Worker {
                 .setSmallIcon(R.mipmap.ic_launcher);
         manager.notify(1, builder.build());
     }
+
 
 }

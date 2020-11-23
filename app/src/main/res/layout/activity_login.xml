@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="#3B3E46"
+    android:background="@color/white"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:fontFamily="sans-serif-black"
-        android:textColor="#FF9F1C"
+        android:textColor="@color/colorPrimary"
         android:text="TATTLE"
         android:textSize="36sp"
         app:layout_constraintEnd_toEndOf="@+id/imageView2"
@@ -52,12 +52,11 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="64dp"
         android:layout_marginEnd="16dp"
-        android:backgroundTint="#FF9F1C"
-        android:ems="10"
         android:hint="Enter your email"
         android:inputType="textPersonName"
-        android:textColor="#ffffff"
-        android:textColorHint="#71778B"
+        android:backgroundTint="@color/colorPrimaryDark"
+        android:textColorHint="@color/text_color_light_grey"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView4" />
@@ -68,11 +67,10 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:ems="10"
         android:inputType="textPersonName"
-        android:textColorHint="#71778B"
-        android:textColor="#ffffff"
-        android:backgroundTint="#FF9F1C"
+        android:backgroundTint="@color/colorPrimaryDark"
+        android:textColorHint="@color/text_color_light_grey"
+        android:textColor="@color/black"
         android:hint="Enter your password"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -83,7 +81,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Email"
-        android:textColor="#FF9F1C"
+        android:textColor="@color/colorPrimaryDark"
         app:layout_constraintBottom_toTopOf="@+id/email"
         app:layout_constraintStart_toStartOf="@+id/email" />
 
@@ -92,7 +90,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:textColor="#FF9F1C"
+        android:textColor="@color/colorPrimaryDark"
         android:text="Password"
         app:layout_constraintStart_toStartOf="@+id/password"
         app:layout_constraintTop_toBottomOf="@+id/email" />
@@ -101,10 +99,9 @@
         android:id="@+id/login"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:background="@drawable/round_corner_button"
-        android:textColor="#ffffff"
+        android:layout_marginTop="8dp"
         android:text="Login"
+        android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="@+id/password"
         app:layout_constraintStart_toStartOf="@+id/password"
         app:layout_constraintTop_toBottomOf="@+id/forgotPassword" />
@@ -115,7 +112,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="Forgot Password?"
-        android:textColor="#FF9F1C"
+        android:textColor="@color/colorAccent"
         app:layout_constraintEnd_toEndOf="@+id/password"
         app:layout_constraintTop_toBottomOf="@+id/password" />
 
@@ -125,16 +122,17 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:text="Dont have account?"
-        android:textColor="#FF9F1C"
+        android:textColor="@color/colorPrimaryDark"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <ProgressBar
         android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/colorAccent"
         app:layout_constraintBottom_toTopOf="@+id/dontHaveAccountTVLogin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/login"

@@ -118,16 +118,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         saveNotifications = new SaveNotifications();
 
         initializeUI();
-        if (checkAndRequestPermissions()) {
-            startWorkmanager();
-        }
-
-        if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {        //ask for permission
-            Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
-            startActivity(intent);
-        }
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
+//        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
 
         progressBar.setVisibility(View.INVISIBLE);
         photoUploadPB.setVisibility(View.INVISIBLE);
@@ -158,109 +149,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         });
     }
 
-    public boolean checkAndRequestPermissions() {
-        List<String> listPermissionsNeeded = new ArrayList<>();
-        for (String perm : appPermissions) {
-            if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-                listPermissionsNeeded.add(perm);
-            }
-        }
 
-        //Ask for non-granted permissions
-        if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), PERMISSIONS_REQUEST_CODE);
-            return false;
-        }
-        //App has all the permissions proceed ahead
-        return true;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == PERMISSIONS_REQUEST_CODE) {
-            HashMap<String, Integer> permissionResults = new HashMap<>();
-            int deniedCount = 0;
-
-            //Gather permission grant results
-            for (int i = 0; i < grantResults.length; i++) {
-                if (grantResults[i] == PackageManager.PERMISSION_DENIED) {
-                    permissionResults.put(permissions[i], grantResults[i]);
-                    deniedCount++;
-                }
-            }
-
-            if (deniedCount == 0) {
-//                proceed with your work here
-                startWorkmanager();
-            } else {
-                for (Map.Entry<String, Integer> entry : permissionResults.entrySet()) {
-                    String permName = entry.getKey();
-                    int permResult = entry.getValue();
-
-                    //permission is denied first time with "never ask again unchecked"
-                    // so ask again explaining the usage of permission
-                    //shouldShowRequestPermissionRationale will return true
-                    if (ActivityCompat.shouldShowRequestPermissionRationale(this, permName)) {
-                        showDialog("", "This app needs to Access to Read and Write to work without any problems",
-                                "Yes, Grant permissions",
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                        checkAndRequestPermissions();
-                                    }
-                                },
-                                "No, Exit app", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                        finish();
-                                    }
-                                }, false);
-                    } else {
-                        showDialog("", "You have denied some permissions. Allow all permissions from settings","Go To Settings",
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                        //Go to app settings
-                                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                                Uri.fromParts("package", getPackageName(), null));
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                        startActivity(intent);
-                                        finish();
-                                    }
-                                },
-                                "No, Exit app", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                        finish();
-                                    }
-                                }, false);
-                        break;
-
-                    }
-
-                }
-            }
-        }
-    }
-    public AlertDialog showDialog(String title, String msg, String positiveLabel,
-                                  DialogInterface.OnClickListener positiveOnClick,
-                                  String negativeLabel, DialogInterface.OnClickListener negativeOnclick,
-                                  boolean isCancelable) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(title);
-        builder.setCancelable(isCancelable);
-        builder.setMessage(msg);
-        builder.setPositiveButton(positiveLabel, positiveOnClick);
-        builder.setNegativeButton(negativeLabel, negativeOnclick);
-
-        AlertDialog alertDialog = builder.create();
-        alertDialog.show();
-        return alertDialog;
-    }
 
     private void registerNewUser() {
         progressBar.setVisibility(View.VISIBLE);
@@ -406,16 +295,16 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         }
     }
 
-  /*  @Override
+    @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                Log.v(TAG, "Permission: " + permissions[0] + "was " + grantResults[0]);
-                //resume tasks needing this permission
-                openImageChooser();
-            }
-    }*/
+            Log.v(TAG, "Permission: " + permissions[0] + "was " + grantResults[0]);
+            //resume tasks needing this permission
+            openImageChooser();
+        }
+    }
 
     public void openImageChooser() {
         Intent intent = new Intent();
@@ -496,25 +385,9 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         }
     }
 
-    public void startWorkmanager() {
-        Log.i(TAG, "startWorkmanager: work manager has started");
-        final WorkManager mWorkManager = WorkManager.getInstance();
-        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(NotificationWorker.class).build();
-        mWorkManager.enqueue(mRequest);
-        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
-            @Override
-            public void onChanged(@Nullable WorkInfo workInfo) {
-                if (workInfo != null) {
-                    if (workInfo.getState().isFinished()) {
-                        workInfo.getOutputData().getBoolean("photosZipped", false);
-                        Log.i(TAG, "onChanged: " + Arrays.toString(workInfo.getOutputData().getStringArray("photosList")));
-                    }
-                }
-            }
-        });
-    }
 
-    private BroadcastReceiver onNotice = new BroadcastReceiver() {
+
+/*    private BroadcastReceiver onNotice = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -522,9 +395,9 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
             String title = intent.getStringExtra("title");
             String text = intent.getStringExtra("text");
 
-/*            Log.i(TAG, "onReceive: " + pack);
+*//*            Log.i(TAG, "onReceive: " + pack);
             Log.i(TAG, "onReceive: " + title);
-            Log.i(TAG, "onReceive: " + text);*/
+            Log.i(TAG, "onReceive: " + text);*//*
             String notf = "package : "+pack+
                     "\ntitle : " + title+
                     "\ntext : " + text;
@@ -534,8 +407,8 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
 
             //int id = intent.getIntExtra("icon",0);
 
-       /*     Log.i(TAG, "onReceive: " + title);
-            Log.i(TAG, "onReceive: " + text);*/
+       *//*     Log.i(TAG, "onReceive: " + title);
+            Log.i(TAG, "onReceive: " + text);*//*
             Context remotePackageContext = null;
             try {
 //                remotePackageContext = getApplicationContext().createPackageContext(pack, 0);
@@ -547,6 +420,6 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
                 e.printStackTrace();
             }
         }
-    };
+    };*/
 
 }
