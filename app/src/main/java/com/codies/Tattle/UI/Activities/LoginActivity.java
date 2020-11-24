@@ -43,6 +43,7 @@ public class LoginActivity extends BaseActivity implements Consts {
     private TextView dontHaveAdcount;
     private TextView forgotPassword;
     SharedPrefs sharedPrefs;
+    User userFB;
 
     private FirebaseAuth mAuth;
     private QBUser userForSave;
@@ -129,14 +130,17 @@ public class LoginActivity extends BaseActivity implements Consts {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
 //                            Toast.makeText(getApplicationContext(), "Login successful!", Toast.LENGTH_LONG).show();
-                            User user = new User();
-                            user.setEmail(email);
-                            sharedPrefs.saveUserData(user);
+                            userFB = new User();
+                            userFB.setEmail(email);
+                            sharedPrefs.saveUserData(userFB);
                             sharedPrefs.loginUser(true);
                             userForSave = createQBUserWithCurrentData(email, password);
+                            Log.i(TAG, "onComplete: " + userForSave.getEmail());
+                            Log.i(TAG, "onComplete: "+userForSave.getPassword());
                             startSignUpNewUser(userForSave);
 
                         } else {
+                            Log.i(TAG, "onComplete: " + task.getException().getMessage());
                             Toast.makeText(getApplicationContext(), "Login failed! Please try again later", Toast.LENGTH_LONG).show();
                             progressBar.setVisibility(View.GONE);
                         }
@@ -200,6 +204,7 @@ public class LoginActivity extends BaseActivity implements Consts {
         if (!TextUtils.isEmpty(userEmail) && !TextUtils.isEmpty(password)) {
             qbUser = new QBUser();
 //            qbUser.setLogin(userEmail);
+            qbUser.setEmail(userEmail);
 //            qbUser.setFullName(password);
             qbUser.setPassword(DEFAULT_QB_USER_PASSWORD);
         }
@@ -212,8 +217,12 @@ public class LoginActivity extends BaseActivity implements Consts {
             @Override
             public void onSuccess(QBUser qbUser, Bundle bundle) {
 //                OpponentsActivity.start(LoginActivity.this);
+                sharedPrefs.saveUserData(userFB);
+                sharedPrefs.loginUser(true);
+                saveUserData(user);
                 Intent intent = new Intent(LoginActivity.this, ChatListActivity.class);
                 startActivity(intent);
+                finish();
             }
 
             @Override
@@ -239,7 +248,6 @@ public class LoginActivity extends BaseActivity implements Consts {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Consts.EXTRA_LOGIN_RESULT_CODE) {
-//            hideProgressDialog();
             boolean isLoginSuccess = data.getBooleanExtra(Consts.EXTRA_LOGIN_RESULT, false);
             String errorMessage = data.getStringExtra(Consts.EXTRA_LOGIN_ERROR_MESSAGE);
 

@@ -60,6 +60,11 @@
             android:name=".UI.Activities.SearchActivity"
             android:configChanges="keyboardHidden|screenSize|orientation"
             android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".UI.Activities.PermissionsActivity"
+            android:configChanges="keyboardHidden|screenSize|orientation"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".UI.Activities.ChatListActivity"
             android:configChanges="keyboardHidden|screenSize|orientation"

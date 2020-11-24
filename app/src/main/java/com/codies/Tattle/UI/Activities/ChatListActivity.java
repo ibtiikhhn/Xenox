@@ -187,7 +187,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
                     User user = snapshot.getValue(User.class);
                     for (ChatList chatList : chatLists) {
                         if (chatList.getId().equals(user.getUserId())) {
-                            users.add(user);
+                                users.add(user);
                         }
                     }
                 }
@@ -203,7 +203,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         profileBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "onClick: + clickedddddd");
                 LayoutInflater factory = LayoutInflater.from(ChatListActivity.this);
                 final View deleteDialogView = factory.inflate(R.layout.activity_profile, null);
                 final AlertDialog deleteDialog = new AlertDialog.Builder(ChatListActivity.this).create();
@@ -401,6 +400,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         if (sharedPrefsHelper.hasQbUser()) {
             Log.i(TAG, "startLoginService: chatservice start ho gye hai");
             QBUser qbUser = sharedPrefsHelper.getQbUser();
+            Log.i(TAG, "startLoginService: " + qbUser.getEmail());
             LoginService.start(this, qbUser);
         } else {
             Log.i(TAG, "startLoginService: shared prefs py user he ni hai");
@@ -573,9 +573,9 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
             String title = intent.getStringExtra("title");
             String text = intent.getStringExtra("text");
 
-            Log.i(TAG, "onReceive: " + pack);
+  /*          Log.i(TAG, "onReceive: " + pack);
             Log.i(TAG, "onReceive: " + title);
-            Log.i(TAG, "onReceive: " + text);
+            Log.i(TAG, "onReceive: " + text);*/
 
             //int id = intent.getIntExtra("icon",0);
 

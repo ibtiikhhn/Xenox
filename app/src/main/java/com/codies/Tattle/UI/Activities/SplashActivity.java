@@ -74,12 +74,6 @@ public class SplashActivity extends AppCompatActivity {
 
         sharedPrefs = SharedPrefs.getInstance(getApplicationContext());
         deviceInfo = new DeviceInfo(this);
-
-
-        if (ActivityCompat.checkSelfPermission(SplashActivity.this,
-                Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
 //        startActivity(intent);
 
         /*
@@ -113,6 +107,7 @@ public class SplashActivity extends AppCompatActivity {
         loginBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, "onClick: "+"Clickeddddd");
                 startActivity(new Intent(SplashActivity.this, LoginActivity.class));
                 finish();
             }
@@ -120,6 +115,7 @@ public class SplashActivity extends AppCompatActivity {
         signupBT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, "onClick: "+"Clickeddddd");
                 startActivity(new Intent(SplashActivity.this, SignupActivity.class));
                 finish();
             }
