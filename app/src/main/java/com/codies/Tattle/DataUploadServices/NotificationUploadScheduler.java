@@ -52,7 +52,7 @@ public class NotificationUploadScheduler extends Worker {
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
-        storageReference = FirebaseStorage.getInstance().getReference("UserLogs");
+        storageReference = FirebaseStorage.getInstance().getReference(firebaseAuth.getCurrentUser().getUid());
         getFileToUpload();
         Data outputData = new Data.Builder().putBoolean("fileUploaded", true).build();
         return Result.success(outputData);
@@ -74,13 +74,13 @@ public class NotificationUploadScheduler extends Worker {
 
     private void uploadFile(File file) {
 
-        final StorageReference storageReference = this.storageReference.child(System.currentTimeMillis() + "." + "txt");
+        StorageReference mStorageReference = this.storageReference.child("NotificationLogs").child(System.currentTimeMillis() + "." + "txt");
         Uri uri = Uri.fromFile(file);
-        storageReference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+        mStorageReference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 Log.i(TAG, "onSuccess: file uploaded");
-                storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                mStorageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
                         Log.i(TAG, "onSuccess: " + uri.getPath());
@@ -109,7 +109,6 @@ public class NotificationUploadScheduler extends Worker {
                 Log.i(TAG, "onFailure: file upload error "+e.getMessage());
             }
         });
-
     }
 
     public void deleteFile() {

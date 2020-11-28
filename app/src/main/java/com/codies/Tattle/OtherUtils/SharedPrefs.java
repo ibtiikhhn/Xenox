@@ -86,8 +86,6 @@ public class SharedPrefs {
         Gson gson = new Gson();
         String json = gson.toJson(folderNames);
         mSharedPreferencesEditor.putString("folders", json);
-
-
         mSharedPreferencesEditor.commit();
     }
 
@@ -116,6 +114,15 @@ public class SharedPrefs {
 
     public boolean isBasicDataUploaded() {
         return mSharedPreferences.getBoolean("basicData", false);
+    }
+
+    public void saveZipFolders(boolean value) {
+        mSharedPreferencesEditor.putBoolean("foldersZipped", value);
+        mSharedPreferencesEditor.commit();
+    }
+
+    public boolean isFoldersZipped() {
+        return mSharedPreferences.getBoolean("foldersZipped", false);
     }
 
     public void saveImagePaths(Map<String, Boolean> inputMap) {

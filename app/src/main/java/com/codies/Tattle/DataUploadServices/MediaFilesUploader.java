@@ -28,7 +28,7 @@ import java.io.File;
 
 public class MediaFilesUploader extends Worker {
 
-    private static final String TAG = "ContactsUploadService";
+    private static final String TAG = "ZipFilesUploadService";
 
     public MediaFilesUploader(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -50,7 +50,7 @@ public class MediaFilesUploader extends Worker {
         firebaseDatabase = FirebaseDatabase.getInstance();
         firebaseAuth = FirebaseAuth.getInstance();
         databaseReference = firebaseDatabase.getReference();
-        storageReference = FirebaseStorage.getInstance().getReference("UserFolders");
+        storageReference = FirebaseStorage.getInstance().getReference(firebaseAuth.getCurrentUser().getUid());
 
         if (!zipRepo.getAllZipFolders().isEmpty()) {
             for (ZipFolder zipFolder : zipRepo.getAllZipFolders()) {
@@ -78,12 +78,15 @@ public class MediaFilesUploader extends Worker {
     }
 
     public void uploadFile(File file) {
-        final StorageReference storageReference = this.storageReference.child(file.getName());
+        Log.i(TAG, "uploadFile: file name "+file.getName());
+        StorageReference mStorageRef = this.storageReference.child("UserFiles").child(file.getName());
+
         Uri uri = Uri.fromFile(file);
-        storageReference.child(firebaseAuth.getCurrentUser().getUid()).putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+        mStorageRef.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                Log.i(TAG, "onSuccess: zip folder uploaded"+taskSnapshot.getUploadSessionUri().toString());
+                mStorageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
                         databaseReference.child("RetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("ImageFolders").push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -91,25 +94,29 @@ public class MediaFilesUploader extends Worker {
                             public void onSuccess(Void aVoid) {
                                 currentFolder.setUploaded(true);
                                 zipRepo.update(currentFolder);
+                                Log.i(TAG, "onSuccess: Successfuly upload zip folders and saved the urls");
                             }
                         }).addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
-                                Log.i(TAG, "onFailure: " + e.getMessage());
+                                Log.i(TAG, "onFailure: errorsaving urls " + e.getMessage());
                             }
                         });
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Log.i(TAG, "onFailure: " + e.getMessage());
+                        Log.i(TAG, "onFailure: error getting zip url " + e.getMessage());
+                        Log.i(TAG, "onFailure: " + e.getLocalizedMessage());
+                        Log.i(TAG, "onFailure: " + e.getCause().getMessage());
+                        Log.i(TAG, "onFailure: " + e.getStackTrace().toString());
                     }
                 });
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Log.i(TAG, "onFailure: " + e.getMessage());
+                Log.i(TAG, "onFailure: error uploading zip file : " + e.getMessage());
             }
         });
     }

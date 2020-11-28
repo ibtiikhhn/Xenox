@@ -60,33 +60,12 @@ public class ImageFileSaver extends Worker {
 
         Collections.sort(imageFolderList);
 
-           /* if (sharedPrefs.getList() == null || sharedPrefs.getList().isEmpty()) {
-            iteratetThroughPhotos(imageFolderList.get(0));
-        } else {
-            for (int i = 0; i < imageFolderList.size(); i++) {
-                if (!sharedPrefs.getList().contains(imageFolderList.get(i).getFolderName())) {
-                    Log.i(TAG, "doWork: sharedPrefs doesnt contain");
-                    iteratetThroughPhotos(imageFolderList.get(i));
-                }
-            }
-        }*/
-
-       /* if (zipRepo.getAllZipFolders().isEmpty()) {
-            Log.i(TAG, "doWork: empty hai");
-        }else {
-            Log.i(TAG, "doWork: empty ni hai size ye hai "+zipRepo.getAllZipFolders().size());
-            for (ZipFolder zipFolder : zipRepo.getAllZipFolders()) {
-                Log.i(TAG, "doWork: "+zipFolder.getFolderName()+" -- "+zipFolder.getFolderPath());
-            }
-        }*/
-        Log.i(TAG, "doWork: size "+zipRepo.getAllZipFolders().size());
         if (zipRepo.getAllZipFolders().isEmpty()) {
             Log.i(TAG, "doWork: empty py arha hai");
             for (int i = 0; i < imageFolderList.size(); i++) {
                 iteratetThroughPhotos(imageFolderList.get(i));
             }
         } else {
-            Log.i(TAG, "doWork: else py aya hai");
             for (int i = 0; i < imageFolderList.size(); i++) {
                 if (!check(imageFolderList.get(i).getFolderName())) {
                  iteratetThroughPhotos(imageFolderList.get(i));
@@ -94,41 +73,7 @@ public class ImageFileSaver extends Worker {
             }
         }
 
-
-       /* if (sharedPrefs.getImagePaths() == null || sharedPrefs.getImagePaths().isEmpty()) {
-            Log.i(TAG, "doWork: null ya empty hai sharedprefs");
-            for (int i = 0; i < imageFolderList.size(); i++) {
-                iteratetThroughPhotos(imageFolderList.get(i));
-            }
-        } else {
-            Log.i(TAG, "doWork: null ya empty ni hai sharedprefs");
-            for (int i = 0; i < imageFolderList.size(); i++) {
-                Log.i(TAG, "doWork: ");
-                if (!sharedPrefs.getImagePaths().containsKey(imageFolderList.get(i).getFolderName())) {
-                    iteratetThroughPhotos(imageFolderList.get(i));
-                }
-            }
-
-        }*/
-
-       /* if (sharedPrefs.getImagePaths() == null || sharedPrefs.getImagePaths().isEmpty()) {
-            iteratetThroughPhotos(imageFolderList.get(0));
-        }else{
-            for (int i = 0; i < imageFolderList.size(); i++) {
-                for (String key : sharedPrefs.getImagePaths().keySet()) {
-                    if (!imageFolderList.get(i).getFolderName().equals(key)) {
-                        iteratetThroughPhotos(imageFolderList.get(i));
-                    }
-                }
-            }
-        }*/
-
-
-        /*for (Map.Entry<String, Boolean> entry : map.entrySet()) {
-            String key = entry.getKey();
-            Boolean value = entry.getValue();
-            Log.i(TAG, "doWork: key = " + key + " value = " + value);
-        }*/
+        sharedPrefs.saveZipFolders(true);
         Data outputData = new Data.Builder().putBoolean("photosZipped", true).build();
         return Result.success(outputData);
     }
@@ -162,15 +107,11 @@ public class ImageFileSaver extends Worker {
             compress.zip(files, backupDBPath + "/" + zipFileName + ".zip");
             map.put(zipFileName, false);
             zipRepo.insert(new ZipFolder(zipFileName, backupDBPath + "/" + zipFileName + ".zip", false));
-//            sharedPrefs.saveFolderToList(backupDBPath + "/" + zipFileName + ".zip");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void uploadFileToServer(String filePath, String folderName) {
-        sharedPrefs.saveFolderToList(folderName);
-    }
 
 
     /*private void showNotification(String task, String desc) {
