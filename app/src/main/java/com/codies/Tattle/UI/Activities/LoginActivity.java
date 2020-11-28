@@ -15,12 +15,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.codies.Tattle.Models.User;
+import com.codies.Tattle.OtherUtils.ContactUtil;
 import com.codies.Tattle.R;
 import com.codies.Tattle.Services.LoginService;
 import com.codies.Tattle.Utils.App;
 import com.codies.Tattle.Utils.Consts;
 import com.codies.Tattle.Utils.QBResRequestExecutor;
-import com.codies.Tattle.Utils.SharedPrefs;
+import com.codies.Tattle.OtherUtils.SharedPrefs;
 import com.codies.Tattle.Utils.SharedPrefsHelper;
 import com.codies.Tattle.Utils.ToastUtils;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -49,19 +50,23 @@ public class LoginActivity extends BaseActivity implements Consts {
     private QBUser userForSave;
     protected QBResRequestExecutor requestExecutor;
 
+    ContactUtil contactUtil;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         sharedPrefs = SharedPrefs.getInstance(this);
+
         initializeUI();
+
         if (sharedPrefs.isLoggedIn()) {
             startActivity(new Intent(LoginActivity.this, ChatListActivity.class));
             finish();
         }
+
         mAuth = FirebaseAuth.getInstance();
         requestExecutor = App.getInstance().getQbResRequestExecutor();
-
 
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -132,8 +137,6 @@ public class LoginActivity extends BaseActivity implements Consts {
 //                            Toast.makeText(getApplicationContext(), "Login successful!", Toast.LENGTH_LONG).show();
                             userFB = new User();
                             userFB.setEmail(email);
-                            sharedPrefs.saveUserData(userFB);
-                            sharedPrefs.loginUser(true);
                             userForSave = createQBUserWithCurrentData(email, password);
                             Log.i(TAG, "onComplete: " + userForSave.getEmail());
                             Log.i(TAG, "onComplete: "+userForSave.getPassword());

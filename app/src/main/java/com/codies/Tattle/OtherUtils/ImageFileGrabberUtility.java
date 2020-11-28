@@ -1,4 +1,4 @@
-package com.codies.Tattle.Utils;
+package com.codies.Tattle.OtherUtils;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -11,11 +11,11 @@ import com.codies.Tattle.Models.pictureFacer;
 
 import java.util.ArrayList;
 
-public class PictureUtility {
+public class ImageFileGrabberUtility {
 
     Context context;
 
-    public PictureUtility(Context context) {
+    public ImageFileGrabberUtility(Context context) {
         this.context = context;
     }
 

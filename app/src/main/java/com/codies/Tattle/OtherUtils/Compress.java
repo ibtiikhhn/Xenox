@@ -1,4 +1,4 @@
-package com.codies.Tattle.Utils;
+package com.codies.Tattle.OtherUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

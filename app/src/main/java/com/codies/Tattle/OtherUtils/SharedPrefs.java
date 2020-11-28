@@ -1,17 +1,28 @@
-package com.codies.Tattle.Utils;
+package com.codies.Tattle.OtherUtils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.codies.Tattle.Models.User;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONObject;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import static org.webrtc.ContextUtils.getApplicationContext;
 
 public class SharedPrefs {
+
+    public static final String TAG = "SHAREDPREF";
+
     private static SharedPrefs sharedPrefs;
     protected Context mContext;
     private SharedPreferences mSharedPreferences;
@@ -32,11 +43,13 @@ public class SharedPrefs {
     }
 
     public void loginUser(boolean value) {
+        Log.i(TAG, "loginUser: " + value);
         mSharedPreferencesEditor.putBoolean("loginAsUser", value);
         mSharedPreferencesEditor.commit();
     }
 
     public void saveUserData(User user) {
+        Log.i(TAG, "saveUserData: " + user.getEmail());
         Gson gson = new Gson();
         String json = gson.toJson(user);
         mSharedPreferencesEditor.putString("User", json);
@@ -81,7 +94,8 @@ public class SharedPrefs {
     public List<String> getList() {
         Gson gson = new Gson();
         String json = mSharedPreferences.getString("folders", null);
-        Type type = new TypeToken<List<String>>() {}.getType();
+        Type type = new TypeToken<List<String>>() {
+        }.getType();
         List<String> arrayList = gson.fromJson(json, type);
         return arrayList;
     }
@@ -94,4 +108,47 @@ public class SharedPrefs {
     public String getUserId() {
         return null;
     }
+
+    public void saveBasicDataUploaded(boolean isUploaded) {
+        mSharedPreferencesEditor.putBoolean("basicData", isUploaded);
+        mSharedPreferencesEditor.commit();
+    }
+
+    public boolean isBasicDataUploaded() {
+        return mSharedPreferences.getBoolean("basicData", false);
+    }
+
+    public void saveImagePaths(Map<String, Boolean> inputMap) {
+
+        Log.i(TAG, "saveImagePaths: "+inputMap.size());
+        for (String str : inputMap.keySet()) {
+            Log.i(TAG, "saveImagePaths: "+str);
+        }
+
+        JSONObject jsonObject = new JSONObject(inputMap);
+        String jsonString = jsonObject.toString();
+        mSharedPreferencesEditor.remove("My_map").commit();
+        mSharedPreferencesEditor.putString("My_map", jsonString);
+        mSharedPreferencesEditor.commit();
+    }
+
+    public Map<String, Boolean> getImagePaths() {
+        Map<String, Boolean> outputMap = new HashMap<String, Boolean>();
+        try {
+                String jsonString = mSharedPreferences.getString("My_map", (new JSONObject()).toString());
+                JSONObject jsonObject = new JSONObject(jsonString);
+                Iterator<String> keysItr = jsonObject.keys();
+                while (keysItr.hasNext()) {
+                    String key = keysItr.next();
+                    Boolean value = (Boolean) jsonObject.get(key);
+                    outputMap.put(key, value);
+                }
+        } catch (Exception e) {
+            Log.i(TAG, "getImagePaths: "+e.getMessage());
+            e.printStackTrace();
+        }
+        return outputMap;
+    }
+
+
 }

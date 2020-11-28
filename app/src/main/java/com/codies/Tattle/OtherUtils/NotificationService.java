@@ -1,4 +1,4 @@
-package com.codies.Tattle.Services;
+package com.codies.Tattle.OtherUtils;
 
 import android.app.Notification;
 import android.content.Context;

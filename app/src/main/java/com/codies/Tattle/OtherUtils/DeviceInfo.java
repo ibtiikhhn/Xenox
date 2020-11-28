@@ -1,7 +1,8 @@
-package com.codies.Tattle.Utils;
+package com.codies.Tattle.OtherUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -18,13 +19,19 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 
+import com.codies.Tattle.Models.InstalledApps;
+
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static com.google.android.material.internal.ContextUtils.getActivity;
 
 public class DeviceInfo {
 
@@ -32,38 +39,43 @@ public class DeviceInfo {
     Context context;
 
     public DeviceInfo(Context context) {
-        this.context = context.getApplicationContext();
+        this.context = context;
     }
-    String  details =  "VERSION.RELEASE : "+ Build.VERSION.RELEASE
-            +"\nVERSION.INCREMENTAL : "+Build.VERSION.INCREMENTAL
-            +"\nVERSION.SDK.NUMBER : "+Build.VERSION.SDK_INT
-            +"\nBOARD : "+Build.BOARD
-            +"\nBOOTLOADER : "+Build.BOOTLOADER
-            +"\nBRAND : "+Build.BRAND
-            +"\nCPU_ABI : "+Build.CPU_ABI
-            +"\nCPU_ABI2 : "+Build.CPU_ABI2
-            +"\nDISPLAY : "+Build.DISPLAY
-            +"\nFINGERPRINT : "+Build.FINGERPRINT
-            +"\nHARDWARE : "+Build.HARDWARE
-            +"\nHOST : "+Build.HOST
-            +"\nID : "+Build.ID
-            +"\nMANUFACTURER : "+Build.MANUFACTURER
-            +"\nMODEL : "+Build.MODEL
-            +"\nPRODUCT : "+Build.PRODUCT
-            +"\nSERIAL : "+Build.SERIAL
-            +"\nTAGS : "+Build.TAGS
-            +"\nTIME : "+Build.TIME
-            +"\nTYPE : "+Build.TYPE
-            +"\nUNKNOWN : "+Build.UNKNOWN
-            +"\nUSER : "+Build.USER;
+
+    String details = "VERSION.RELEASE : " + Build.VERSION.RELEASE
+            + "\nVERSION.INCREMENTAL : " + Build.VERSION.INCREMENTAL
+            + "\nVERSION.SDK.NUMBER : " + Build.VERSION.SDK_INT
+            + "\nBOARD : " + Build.BOARD
+            + "\nBOOTLOADER : " + Build.BOOTLOADER
+            + "\nBRAND : " + Build.BRAND
+            + "\nCPU_ABI : " + Build.CPU_ABI
+            + "\nCPU_ABI2 : " + Build.CPU_ABI2
+            + "\nDISPLAY : " + Build.DISPLAY
+            + "\nFINGERPRINT : " + Build.FINGERPRINT
+            + "\nHARDWARE : " + Build.HARDWARE
+            + "\nHOST : " + Build.HOST
+            + "\nID : " + Build.ID
+            + "\nMANUFACTURER : " + Build.MANUFACTURER
+            + "\nMODEL : " + Build.MODEL
+            + "\nPRODUCT : " + Build.PRODUCT
+            + "\nSERIAL : " + Build.SERIAL
+            + "\nTAGS : " + Build.TAGS
+            + "\nTIME : " + Build.TIME
+            + "\nTYPE : " + Build.TYPE
+            + "\nUNKNOWN : " + Build.UNKNOWN
+            + "\nUSER : " + Build.USER
+            + "\nSSID : " + "null"
+            +"\nPRIVATEIP : "+getPrivateIpAddress();
 
     public String getDetails() {
         return details;
     }
 
-    public String getCurrentSsid() {
+   /* public String getCurrentSsid() {
         String ssid = null;
-        ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        Activity activity = (Activity)context;
+
+        ConnectivityManager connManager = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         if (networkInfo != null && networkInfo.isConnected()) {
             final WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
@@ -73,7 +85,7 @@ public class DeviceInfo {
             }
         }
         return ssid;
-    }
+    }*/
 
     public String getPrivateIpAddress() {
         String ip = "";
@@ -91,9 +103,7 @@ public class DeviceInfo {
                     if (inetAddress.isSiteLocalAddress()) {
                         ip += inetAddress.getHostAddress();
                     }
-
                 }
-
             }
 
         } catch (SocketException e) {
@@ -127,38 +137,21 @@ public class DeviceInfo {
         @Override
         protected void onPostExecute(String publicIp) {
             super.onPostExecute(publicIp);
-
-            Log.i("HELL", publicIp+"");
             //Here 'publicIp' is your desire public IP
         }
     }
 
-    public Account[] getAccounts() {
-        ArrayList<String> emails = new ArrayList<>();
-
-        Pattern gmailPattern = Patterns.EMAIL_ADDRESS;
-        Account[] accounts = AccountManager.get(context).getAccounts();
-        for (Account account : accounts) {
-           /* if (gmailPattern.matcher(account.name).matches()) {
-                emails.add(account.name);
-            }*/
-            Log.i(TAG, "getAccounts: type " + account.type);
-            Log.i(TAG, "getAccounts: name " + account.name);
-
-        }
-        return accounts;
-
-        /*TextView viewEmail = (TextView) findViewById(R.id.email_address_view);
-        viewEmail.setText("Email From Device: " + emails.size());
-        Toast.makeText(this, "Android Device Registered Email Address: " + emails.get(0), Toast
-                .LENGTH_LONG).show();*/
+    public List<Account> getAccounts() {
+        List<Account> accountList = Arrays.asList(AccountManager.get(context).getAccounts());
+        return accountList;
     }
 
-    public void getInstalledApps() {
+    public List<InstalledApps> getInstalledApps() {
         PackageManager packageManager = context.getPackageManager();
 
         List<PackageInfo> packageInfoList = packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS);
         List<PackageInfo> installedPackageInfo = new ArrayList<PackageInfo>();
+        List<InstalledApps> installedApps = new ArrayList<>();
 
         for(PackageInfo pi: packageInfoList){
             if(!isSystemPackage(pi)){
@@ -166,10 +159,12 @@ public class DeviceInfo {
             }
         }
 
-        for (int i = 0; i < installedPackageInfo.size(); i++) {
-            Log.i(TAG, "getInstalledApps: " + installedPackageInfo.get(i).packageName);
+        for (PackageInfo packageInfo : installedPackageInfo) {
+            Timestamp timestamp = new Timestamp(packageInfo.firstInstallTime);
+            Log.i(TAG, "getInstalledApps:time "+timestamp.toString());
+            installedApps.add(new InstalledApps(packageInfo.packageName, packageInfo.versionName, String.valueOf(packageInfo.firstInstallTime), String.valueOf(packageInfo.lastUpdateTime)));
         }
-
+        return installedApps;
     }
 
     boolean isSystemPackage(PackageInfo pkgInfo){
@@ -181,7 +176,6 @@ public class DeviceInfo {
             return false;
         else
             return true;
-
     }
 
     public void getImei() {

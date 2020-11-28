@@ -4,27 +4,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
-import androidx.lifecycle.Observer;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
 
 import android.Manifest;
-import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -40,9 +27,8 @@ import com.codies.Tattle.Models.User;
 import com.codies.Tattle.R;
 import com.codies.Tattle.Utils.App;
 import com.codies.Tattle.Utils.Consts;
-import com.codies.Tattle.Utils.NotificationWorker;
 import com.codies.Tattle.Utils.QBResRequestExecutor;
-import com.codies.Tattle.Utils.SaveNotifications;
+import com.codies.Tattle.OtherUtils.SaveNotifications;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -61,11 +47,6 @@ import com.quickblox.core.exception.QBResponseException;
 import com.quickblox.users.model.QBUser;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class SignupActivity extends AppCompatActivity implements com.codies.Tattle.Utils.Consts {
 

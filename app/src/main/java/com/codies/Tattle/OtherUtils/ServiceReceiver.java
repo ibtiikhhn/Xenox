@@ -1,4 +1,4 @@
-package com.codies.Tattle.Services;
+package com.codies.Tattle.OtherUtils;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

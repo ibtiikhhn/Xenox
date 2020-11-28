@@ -23,7 +23,7 @@ import com.codies.Tattle.Services.CallInitiaterHandler;
 import com.codies.Tattle.Services.CallService;
 import com.codies.Tattle.Utils.Consts;
 import com.codies.Tattle.Utils.MessageAdapter;
-import com.codies.Tattle.Utils.SharedPrefs;
+import com.codies.Tattle.OtherUtils.SharedPrefs;
 import com.codies.Tattle.Utils.SharedPrefsHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
