@@ -45,7 +45,6 @@ public class NotificationUploadScheduler extends Worker {
         this.context = context;
     }
 
-
     @NonNull
     @Override
     public Result doWork() {

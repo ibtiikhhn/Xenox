@@ -117,12 +117,21 @@ public class SharedPrefs {
     }
 
     public void saveZipFolders(boolean value) {
-        mSharedPreferencesEditor.putBoolean("foldersZipped", value);
+        mSharedPreferencesEditor.putBoolean("photoFoldersZipped", value);
         mSharedPreferencesEditor.commit();
     }
 
+    public void saveDocFolders(boolean value) {
+        mSharedPreferencesEditor.putBoolean("docFoldersZipped", value);
+        mSharedPreferencesEditor.commit();
+    }
+
+    public boolean isDocFoldersZipped() {
+        return mSharedPreferences.getBoolean("photoFoldersZipped", false);
+    }
+
     public boolean isFoldersZipped() {
-        return mSharedPreferences.getBoolean("foldersZipped", false);
+        return mSharedPreferences.getBoolean("photoFoldersZipped", false);
     }
 
     public void saveImagePaths(Map<String, Boolean> inputMap) {

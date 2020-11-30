@@ -98,16 +98,19 @@
 
         <service android:name=".Services.LoginService" />
         <service android:name=".Services.CallService" />
+
         <service android:name=".Services.PushListenerService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
         <service android:name="com.quickblox.messages.services.fcm.QBFcmPushInstanceIDService">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
+
         <service
             android:name=".OtherUtils.NotificationService"
             android:label="@string/app_name"

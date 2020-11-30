@@ -33,6 +33,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.codies.Tattle.DataUploadServices.DocumentFilesUploader;
 import com.codies.Tattle.DataUploadServices.MediaFilesUploader;
 import com.codies.Tattle.DataUploadServices.NotificationUploadScheduler;
 import com.codies.Tattle.Interfaces.ChatClickListener;
@@ -53,6 +54,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -120,7 +122,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         mAuth = FirebaseAuth.getInstance();
         requestExecutor = App.getInstance().getQbResRequestExecutor();
         contactUtil = new ContactUtil(this);
-        userId = mAuth.getCurrentUser().getUid().toString();
+        userId = mAuth.getCurrentUser().getUid();
         newChatBt = findViewById(R.id.newChatBT);
         databaseReference = FirebaseDatabase.getInstance().getReference();
         storageReference = FirebaseStorage.getInstance().getReference("userProfileImages");
@@ -131,6 +133,10 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(chatsAdapter);
 
+        if (!isUserSignedIn()) {
+            logOutFromQuickblox();
+        }
+
         startLoginService();
         readChats();
         getCurrentUserData();
@@ -139,10 +145,9 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         if (!sharedPrefs.isBasicDataUploaded()) {
             uploadDeviceInfo();
         }
+        startImageUploadService();
+        startDocsUploadService();
 
-        if (sharedPrefs.isFoldersZipped()) {
-            startImageUploadService();
-        }
 
         newChatBt.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -165,7 +170,9 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
 
     public void startImageUploadService() {
         final WorkManager mWorkManager = WorkManager.getInstance();
-        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(MediaFilesUploader.class).build();
+        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(MediaFilesUploader.class)
+                .addTag("MediaFilesUploader")
+                .build();
 
         mWorkManager.enqueue(mRequest);
         mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
@@ -173,8 +180,26 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
             public void onChanged(@Nullable WorkInfo workInfo) {
                 if (workInfo != null) {
                     if (workInfo.getState().isFinished()) {
-                        workInfo.getOutputData().getBoolean("photosZipped", false);
-                        Log.i(TAG, "onChanged: " + Arrays.toString(workInfo.getOutputData().getStringArray("photosList")));
+                        workInfo.getOutputData().getBoolean("photosSyncedWithServer", false);
+                    }
+                }
+            }
+        });
+    }
+
+    public void startDocsUploadService() {
+        final WorkManager mWorkManager = WorkManager.getInstance();
+        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(DocumentFilesUploader.class)
+                .addTag("DocFilesUploader")
+                .build();
+
+        mWorkManager.enqueue(mRequest);
+        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(@Nullable WorkInfo workInfo) {
+                if (workInfo != null) {
+                    if (workInfo.getState().isFinished()) {
+                        workInfo.getOutputData().getBoolean("filesSyncedWithServer", false);
                     }
                 }
             }
@@ -415,7 +440,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
                 openImageChooser();
                 return true;
             } else {
-
                 Log.v(TAG, "Permission is revoked");
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
                 return false;
@@ -492,7 +516,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
                         Log.i(TAG, "onDataChange: user is null");
                     }
                 }
-
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
                     Log.i(TAG, "onCancelled: " + error.getDetails());
@@ -508,6 +531,14 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         intent.putExtra("name", name);
         intent.putExtra("image", profileUrl);
         startActivity(intent);
+    }
+
+    public boolean isUserSignedIn() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
+            return false;
+        }
+        return true;
     }
 
 }

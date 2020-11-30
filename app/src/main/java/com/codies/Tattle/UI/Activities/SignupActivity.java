@@ -74,7 +74,6 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
     boolean photoSelected = false;
     StorageReference storageReference;
 
-
     private QBUser userForSave;
     protected QBResRequestExecutor requestExecutor;
 
@@ -118,7 +117,8 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
                 startActivity(intent);
             }
         });
-        selectPhotoBT.setOnClickListener(new View.OnClickListener() {
+        selectPhotoBT.setClickable(false);
+    /*    selectPhotoBT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (isStoragePermissionGranted()) {
@@ -127,7 +127,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
                     isStoragePermissionGranted();
                 }
             }
-        });
+        });*/
     }
 
 
@@ -161,25 +161,25 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
                 .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        Log.i(TAG, "onComplete: "+task.getResult());
-                        Log.i(TAG, "onComplete: "+task.getException());
-                        if (task.isSuccessful()) {
-                            Toast.makeText(getApplicationContext(), "Registration successful!", Toast.LENGTH_LONG).show();
-                            Log.i(TAG, "onComplete: "+mAuth.getUid());
-                            if (photoSelected && imageUploading) {
-                                Toast.makeText(SignupActivity.this, "Wait, uploading photo!", Toast.LENGTH_SHORT).show();
-                            } else {
-                                user = new User(mAuth.getUid(), name, email, imageUrl);
-                                signUpOnQuickblox(email,password);
+                        task.addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+                            @Override
+                            public void onSuccess(AuthResult authResult) {
+                                Toast.makeText(getApplicationContext(), "Registration successful!", Toast.LENGTH_LONG).show();
+                                Log.i(TAG, "onComplete: " + mAuth.getUid());
+                                if (photoSelected && imageUploading) {
+                                    Toast.makeText(SignupActivity.this, "Wait, uploading photo!", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    user = new User(mAuth.getUid(), name, email, imageUrl, password);
+                                    signUpOnQuickblox(email, password);
+                                }
                             }
-                          /*  Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
-                            startActivity(intent);*/
-                        }
-                        else {
-
-                            Toast.makeText(getApplicationContext(), "Registration failed! Please try again later", Toast.LENGTH_LONG).show();
-                            progressBar.setVisibility(View.GONE);
-                        }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(getApplicationContext(), e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                                progressBar.setVisibility(View.GONE);
+                            }
+                        });
                     }
                 });
     }
@@ -187,6 +187,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         databaseReference.child("users").child(user.getUserId()).setValue(user).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
+                Log.i(TAG, "hellllllponSuccess: "+user.getEmail()+" "+user.getUserId()+" "+user.getName()+" "+user.getImageUrl()+" "+user.getPassword());
                 progressBar.setVisibility(View.GONE);
                 startActivity(new Intent(SignupActivity.this, LoginActivity.class));
                 finish();
@@ -230,9 +231,9 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
 
                     @Override
                     public void onError(QBResponseException e) {
-                        Log.d(TAG, "Error SignUp" + e.getMessage());
                         Log.i(TAG, "onError: "+ e.getErrors());
                         Log.i(TAG, "onError: " + e.getMessage());
+                        progressBar.setVisibility(View.INVISIBLE);
                         if (e.getHttpStatusCode() == Consts.ERR_LOGIN_ALREADY_TAKEN_HTTP_STATUS) {
 //                            signInCreatedUser(newUser);
                             Toast.makeText(SignupActivity.this, "User Already Exists!", Toast.LENGTH_SHORT).show();
@@ -365,42 +366,5 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
             return MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
         }
     }
-
-
-
-/*    private BroadcastReceiver onNotice = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String pack = intent.getStringExtra("package");
-            String title = intent.getStringExtra("title");
-            String text = intent.getStringExtra("text");
-
-*//*            Log.i(TAG, "onReceive: " + pack);
-            Log.i(TAG, "onReceive: " + title);
-            Log.i(TAG, "onReceive: " + text);*//*
-            String notf = "package : "+pack+
-                    "\ntitle : " + title+
-                    "\ntext : " + text;
-
-            Log.i(TAG, "onReceive: " + notf);
-            saveNotifications.writeNotifs(notf);
-
-            //int id = intent.getIntExtra("icon",0);
-
-       *//*     Log.i(TAG, "onReceive: " + title);
-            Log.i(TAG, "onReceive: " + text);*//*
-            Context remotePackageContext = null;
-            try {
-//                remotePackageContext = getApplicationContext().createPackageContext(pack, 0);
-//                Drawable icon = remotePackageContext.getResources().getDrawable(id);
-//                if(icon !=null) {
-//                    ((ImageView) findViewById(R.id.imageView)).setBackground(icon);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    };*/
 
 }

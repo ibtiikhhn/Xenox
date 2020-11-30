@@ -1,4 +1,4 @@
-package com.codies.Tattle.ImageFilesDB;
+package com.codies.Tattle.LocalFilesDB;
 
 import android.content.Context;
 
@@ -8,24 +8,24 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {ZipFolder.class}, version = 1)
-public abstract class ZipDatabase extends RoomDatabase{
-    public static ZipDatabase zipDatabase;
+@Database(entities = {ImageFile.class}, version = 1)
+public abstract class ImageFileDatabase extends RoomDatabase {
+    public static ImageFileDatabase imageFileDatabase;
 
-    public abstract ZipFolderDAO zipFolderDAO();
+    public abstract ImageFileDAO imageFileDAO();
 
-    public static synchronized ZipDatabase getZipDatabase(Context context) {
-        if (zipDatabase == null) {
-            zipDatabase = Room.databaseBuilder(context.getApplicationContext(), ZipDatabase.class, "zipDB")
+    public static synchronized ImageFileDatabase getImageFileDatabase(Context context) {
+        if (imageFileDatabase == null) {
+            imageFileDatabase = Room.databaseBuilder(context.getApplicationContext(), ImageFileDatabase.class, "imageFileDB")
                     .addCallback(callback)
                     .fallbackToDestructiveMigration()
                     .build();
 
         }
-        return zipDatabase;
+        return imageFileDatabase;
     }
 
-    private static RoomDatabase.Callback callback = new RoomDatabase.Callback(){
+    private static Callback callback = new Callback(){
         @Override
         public void onCreate(@NonNull SupportSQLiteDatabase db) {
             super.onCreate(db);

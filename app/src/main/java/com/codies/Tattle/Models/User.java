@@ -4,16 +4,26 @@ public class User {
     String userId;
     String name;
     String email;
+    String password;
     String imageUrl;
 
     public User() {
     }
 
-    public User(String userId, String name, String email, String imageUrl) {
+    public User(String userId, String name, String email, String imageUrl,String password) {
         this.userId = userId;
         this.name = name;
         this.email = email;
         this.imageUrl = imageUrl;
+        this.password = password;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getEmail() {

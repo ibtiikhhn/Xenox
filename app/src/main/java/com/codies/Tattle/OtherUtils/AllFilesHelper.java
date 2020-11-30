@@ -6,25 +6,24 @@ import android.util.Log;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
-public class DocumentFiles {
-
-    public static final String TAG = "DocumentFiles";
+public class AllFilesHelper {
 
     String fileType;
+    List<File> myFiles;
 
     // Constructor
-    public DocumentFiles(String fileType) {
+    public AllFilesHelper(String fileType) {
         this.fileType = fileType;
+        myFiles = new ArrayList<>();
     }
 
-
-
-
-    public void Search_Dir(File dir) {
+    public List<File> Search_Dir(File dir) {
 //        String pdfPattern = ".pdf";
 
-        File FileList[] = dir.listFiles();
+
+        File[] FileList = dir.listFiles();
 
         if (FileList != null) {
             for (int i = 0; i < FileList.length; i++) {
@@ -34,12 +33,12 @@ public class DocumentFiles {
                 } else {
                     if (FileList[i].getName().endsWith(fileType)){
                         //here you have that file.
-                        Log.i(TAG, "Search_Dir: " + FileList[i].getName());
-                        Log.i(TAG, "Search_Dir:path " + FileList[i].getAbsolutePath());
+                        myFiles.add(FileList[i]);
 
                     }
                 }
             }
         }
+        return myFiles;
     }
 }

