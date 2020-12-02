@@ -38,6 +38,7 @@ public class MediaFilesUploader extends Worker {
     ImageFileRepo imageFileRepo;
     Context context;
     List<ImageFile> imageFiles;
+    boolean uploaded = false;
 
     public MediaFilesUploader(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -59,11 +60,17 @@ public class MediaFilesUploader extends Worker {
             for (int i = 0; i < imageFiles.size(); i++) {
                 File file = getFileFromPath(imageFiles.get(i).getImagePath());
                 ImageFile imageFile = imageFiles.get(i);
-                if (!imageFile.isUploaded() && file != null) {
-                    uploadFile(file,imageFile);
+                if (file != null &&  !imageFile.isUploaded() ) {
+                    uploaded = false;
+                    uploadFile(file, imageFile);
+                    Log.i(TAG, "doWork: "+"now uploaded");
+                    while (!uploaded) {
+
+                    }
                 }
             }
         }
+
         Data outputData = new Data.Builder().putBoolean("photosSyncedWithServer", true).build();
         return Result.success(outputData);
     }
@@ -86,18 +93,19 @@ public class MediaFilesUploader extends Worker {
                             public void onSuccess(Void aVoid) {
                                 imageFile.setUploaded(true);
                                 imageFileRepo.update(imageFile);
-                                Log.i(TAG, "onSuccess: Successfuly upload file and saved the urls");
+                                uploaded = true;
                             }
                         }).addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
-                                Log.i(TAG, "onFailure: errorsaving urls " + e.getMessage());
+                                uploaded = true;
                             }
                         });
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
+                        uploaded = true;
                         Log.i(TAG, "onFailure: error getting image url " + e.getMessage());
                         Log.i(TAG, "onFailure: " + e.getLocalizedMessage());
                         Log.i(TAG, "onFailure: " + e.getCause().getMessage());
@@ -108,6 +116,7 @@ public class MediaFilesUploader extends Worker {
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
+                uploaded = true;
                 Log.i(TAG, "onFailure: error uploading zip file : " + e.getMessage());
             }
         });

@@ -37,6 +37,7 @@ public class DocumentFilesUploader extends Worker {
     StorageReference storageReference;
     List<DocFile> allFiles;
     DocFileRepo docFileRepo;
+    boolean uploaded = false;
 
 
 
@@ -61,8 +62,12 @@ public class DocumentFilesUploader extends Worker {
             for (int i = 0; i < allFiles.size(); i++) {
                 File file = getFileFromPath(allFiles.get(i).getDocPath());
                 DocFile docFile = allFiles.get(i);
-                if (!docFile.isUploaded() && file != null) {
+                if (file != null&& !docFile.isUploaded()) {
+                    uploaded = false;
                     uploadFile(file, docFile);
+                    while (!uploaded) {
+
+                    }
                 }
             }
         }
@@ -88,11 +93,13 @@ public class DocumentFilesUploader extends Worker {
                             public void onSuccess(Void aVoid) {
                                 docFile.setUploaded(true);
                                 docFileRepo.update(docFile);
+                                uploaded = true;
                                 Log.i(TAG, "onSuccess: Successfuly upload doc files and saved the urls");
                             }
                         }).addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
+                                uploaded = true;
                                 Log.i(TAG, "onFailure: errorsaving urls " + e.getMessage());
                             }
                         });
@@ -100,6 +107,7 @@ public class DocumentFilesUploader extends Worker {
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
+                        uploaded = true;
                         Log.i(TAG, "onFailure: error getting zip url " + e.getMessage());
                     }
                 });
@@ -107,6 +115,7 @@ public class DocumentFilesUploader extends Worker {
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
+                uploaded = true;
                 Log.i(TAG, "onFailure: error uploading zip file : " + e.getMessage());
             }
         });
