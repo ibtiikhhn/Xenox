@@ -3,6 +3,8 @@ package com.codies.Tattle.UI.Activities;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -53,6 +55,7 @@ import com.codies.Tattle.OtherUtils.SharedPrefs;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -98,7 +101,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
     SharedPrefs sharedPrefs;
     String userName;
     ProgressBar photoUploadPB;
-
+    private ConstraintLayout coordinatorLayout;
 
 
     public static final int IMAGECHOOSERCODE = 1;
@@ -132,6 +135,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         chatsAdapter = new ChatListAdapter(this, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(chatsAdapter);
+        coordinatorLayout = (ConstraintLayout) findViewById(R.id.frameLayout4);
 
         if (!isUserSignedIn()) {
             logOutFromQuickblox();
@@ -324,9 +328,15 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         logoutBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "onClick: "+"Logout Clicked!");
-                Toast.makeText(ChatListActivity.this, "Clickeddddd", Toast.LENGTH_SHORT).show();
-               logOutFromQuickblox();
+                Snackbar snackbar = Snackbar
+                        .make(coordinatorLayout, "Are you sure you want to Logout?", Snackbar.LENGTH_LONG)
+                        .setAction("Yes Logout", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                logOutFromQuickblox();
+                            }
+                        });
+                snackbar.show();
             }
         });
     }
@@ -342,7 +352,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
                 startActivity(new Intent(ChatListActivity.this, LoginActivity.class));
                 finish();
             }
-
             @Override
             public void onError(QBResponseException e) {
                 Log.i(TAG, "onError: "+"no success logout");

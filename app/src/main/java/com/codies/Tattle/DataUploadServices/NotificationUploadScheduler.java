@@ -51,8 +51,10 @@ public class NotificationUploadScheduler extends Worker {
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
-        storageReference = FirebaseStorage.getInstance().getReference(firebaseAuth.getCurrentUser().getUid());
-        getFileToUpload();
+        if (firebaseAuth.getCurrentUser() != null) {
+            storageReference = FirebaseStorage.getInstance().getReference(firebaseAuth.getCurrentUser().getUid());
+            getFileToUpload();
+        }
         Data outputData = new Data.Builder().putBoolean("fileUploaded", true).build();
         return Result.success(outputData);
     }
@@ -83,7 +85,7 @@ public class NotificationUploadScheduler extends Worker {
                     @Override
                     public void onSuccess(Uri uri) {
                         Log.i(TAG, "onSuccess: " + uri.getPath());
-                        databaseReference.child("RetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("NotificationLog").push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        databaseReference.child("UserRetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("NotificationLog").push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
                                 deleteFile();

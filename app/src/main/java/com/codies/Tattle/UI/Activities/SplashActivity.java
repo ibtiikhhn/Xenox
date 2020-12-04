@@ -64,8 +64,8 @@ public class SplashActivity extends AppCompatActivity {
     Button loginBt;
     Button signupBT;
     SharedPrefs sharedPrefs;
-
     ContactUtil contactUtil;
+    AlertDialog alertDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,14 +76,17 @@ public class SplashActivity extends AppCompatActivity {
         sharedPrefs = SharedPrefs.getInstance(this);
         contactUtil = new ContactUtil(this);
 
+        alertDialog = new AlertDialog.Builder(this).create();
+        initBuilder();
+
         if (checkAndRequestPermissions()) {
             savePhotosToLocalDB();
             saveDocsToLocalDB();
         }
 
-        if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {
+    /*    if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {
             showPermissionDialogue();
-        }
+        }*/
         LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
 
         if (sharedPrefs.isLoggedIn()) {
@@ -107,32 +110,21 @@ public class SplashActivity extends AppCompatActivity {
         });
     }
 
-    public void showPermissionDialogue() {
-        if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {
-            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    switch (which) {
-                        case DialogInterface.BUTTON_POSITIVE:
-                            //Yes button clicked
-                            Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
-                            startActivity(intent);
-                            break;
-
-                        case DialogInterface.BUTTON_NEGATIVE:
-                            //No button clicked
-                            System.exit(0);
-                            break;
-                    }
-                }
-            };
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setCancelable(false);
-            builder.setMessage("You Need To Allow Permissions To Get The Best Of This App.").setPositiveButton("Allow Permission", dialogClickListener)
-                    .setNegativeButton("Cancel, Close App", dialogClickListener).show();//ask for permission
-
-        }
+    protected void initBuilder() {
+        alertDialog.setMessage("You Need To Allow Permissions To Get The Best Of This App.");
+        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Allow Permission", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+                startActivity(intent);
+            }
+        });
+        alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "No, Exit App", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                System.exit(0);
+            }
+        });
     }
 
 
@@ -314,5 +306,17 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.i(TAG, "onResume: onresume py aya ");
+        if (!alertDialog.isShowing()) {
+            if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {
+                Log.i(TAG, "onResume: dobara is k andar aya");
+                alertDialog.show();
+            }
+        }
     }
 }

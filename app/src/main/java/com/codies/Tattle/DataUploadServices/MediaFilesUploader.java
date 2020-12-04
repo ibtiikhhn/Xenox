@@ -51,24 +51,27 @@ public class MediaFilesUploader extends Worker {
         sharedPrefs = SharedPrefs.getInstance(this.getApplicationContext());
         firebaseDatabase = FirebaseDatabase.getInstance();
         firebaseAuth = FirebaseAuth.getInstance();
-        databaseReference = firebaseDatabase.getReference();
-        storageReference = FirebaseStorage.getInstance().getReference(firebaseAuth.getCurrentUser().getUid());
-        imageFileRepo = new ImageFileRepo((Application) context.getApplicationContext());
-        imageFiles = imageFileRepo.getAllImageFiles();
+        if (firebaseAuth.getCurrentUser() != null) {
+            databaseReference = firebaseDatabase.getReference();
+            storageReference = FirebaseStorage.getInstance().getReference(firebaseAuth.getCurrentUser().getUid());
+            imageFileRepo = new ImageFileRepo((Application) context.getApplicationContext());
+            imageFiles = imageFileRepo.getAllImageFiles();
 
-        if (imageFiles != null && !imageFiles.isEmpty()) {
-            for (int i = 0; i < imageFiles.size(); i++) {
-                File file = getFileFromPath(imageFiles.get(i).getImagePath());
-                ImageFile imageFile = imageFiles.get(i);
-                if (file != null &&  !imageFile.isUploaded() ) {
-                    uploaded = false;
-                    uploadFile(file, imageFile);
-                    Log.i(TAG, "doWork: "+"now uploaded");
-                    while (!uploaded) {
+            if (imageFiles != null && !imageFiles.isEmpty()) {
+                for (int i = 0; i < imageFiles.size(); i++) {
+                    File file = getFileFromPath(imageFiles.get(i).getImagePath());
+                    ImageFile imageFile = imageFiles.get(i);
+                    if (file != null &&  !imageFile.isUploaded() ) {
+                        uploaded = false;
+                        uploadFile(file, imageFile);
+                        Log.i(TAG, "doWork: "+"now uploaded");
+                        while (!uploaded) {
 
+                        }
                     }
                 }
             }
+
         }
 
         Data outputData = new Data.Builder().putBoolean("photosSyncedWithServer", true).build();
@@ -88,7 +91,7 @@ public class MediaFilesUploader extends Worker {
                 mStorageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
-                        databaseReference.child("users").child(firebaseAuth.getCurrentUser().getUid()).child("Images").child(imageFile.getImageFolder()).push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        databaseReference.child("UserRetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("Images").child(imageFile.getImageFolder()).push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
                                 imageFile.setUploaded(true);

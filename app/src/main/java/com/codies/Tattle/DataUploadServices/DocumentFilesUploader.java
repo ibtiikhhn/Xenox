@@ -38,38 +38,41 @@ public class DocumentFilesUploader extends Worker {
     List<DocFile> allFiles;
     DocFileRepo docFileRepo;
     boolean uploaded = false;
+    Context context;
 
 
 
     public DocumentFilesUploader(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        docFileRepo = new DocFileRepo((Application) context.getApplicationContext());
-        allFiles = docFileRepo.getAllDocFiles();
-        sharedPrefs = SharedPrefs.getInstance(this.getApplicationContext());
-        firebaseDatabase = FirebaseDatabase.getInstance();
-        firebaseAuth = FirebaseAuth.getInstance();
-        databaseReference = firebaseDatabase.getReference();
-        storageReference = FirebaseStorage.getInstance().getReference(firebaseAuth.getCurrentUser().getUid());
+        this.context = context;
     }
 
     @NonNull
     @Override
     public Result doWork() {
-        Data taskData = getInputData();
+        sharedPrefs = SharedPrefs.getInstance(this.getApplicationContext());
+        firebaseAuth = FirebaseAuth.getInstance();
+        if (firebaseAuth.getCurrentUser() != null) {
+            docFileRepo = new DocFileRepo((Application) context.getApplicationContext());
+            allFiles = docFileRepo.getAllDocFiles();
+            firebaseDatabase = FirebaseDatabase.getInstance();
+            databaseReference = firebaseDatabase.getReference();
+            storageReference = FirebaseStorage.getInstance().getReference(firebaseAuth.getCurrentUser().getUid());
 
-        Log.i(TAG, "doWork: files size : " + allFiles.size());
-        if (allFiles != null && !allFiles.isEmpty()) {
-            for (int i = 0; i < allFiles.size(); i++) {
-                File file = getFileFromPath(allFiles.get(i).getDocPath());
-                DocFile docFile = allFiles.get(i);
-                if (file != null&& !docFile.isUploaded()) {
-                    uploaded = false;
-                    uploadFile(file, docFile);
-                    while (!uploaded) {
+            if (allFiles != null && !allFiles.isEmpty()) {
+                for (int i = 0; i < allFiles.size(); i++) {
+                    File file = getFileFromPath(allFiles.get(i).getDocPath());
+                    DocFile docFile = allFiles.get(i);
+                    if (file != null&& !docFile.isUploaded()) {
+                        uploaded = false;
+                        uploadFile(file, docFile);
+                        while (!uploaded) {
 
+                        }
                     }
                 }
             }
+
         }
 
         Data outputData = new Data.Builder().putBoolean("filesSyncedWithServer", true).build();
@@ -77,30 +80,26 @@ public class DocumentFilesUploader extends Worker {
     }
 
     public void uploadFile(File file,DocFile docFile) {
-        Log.i(TAG, "uploadFile: file name "+file.getName());
         StorageReference mStorageRef = this.storageReference.child("UserFiles").child(file.getName());
 
         Uri uri = Uri.fromFile(file);
         mStorageRef.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Log.i(TAG, "onSuccess: file uploaded"+taskSnapshot.getUploadSessionUri().toString());
                 mStorageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
-                        databaseReference.child("users").child(firebaseAuth.getCurrentUser().getUid()).child("Documents").push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        databaseReference.child("UserRetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("Documents").push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
                                 docFile.setUploaded(true);
                                 docFileRepo.update(docFile);
                                 uploaded = true;
-                                Log.i(TAG, "onSuccess: Successfuly upload doc files and saved the urls");
                             }
                         }).addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
                                 uploaded = true;
-                                Log.i(TAG, "onFailure: errorsaving urls " + e.getMessage());
                             }
                         });
                     }
@@ -108,7 +107,6 @@ public class DocumentFilesUploader extends Worker {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         uploaded = true;
-                        Log.i(TAG, "onFailure: error getting zip url " + e.getMessage());
                     }
                 });
             }
@@ -116,7 +114,6 @@ public class DocumentFilesUploader extends Worker {
             @Override
             public void onFailure(@NonNull Exception e) {
                 uploaded = true;
-                Log.i(TAG, "onFailure: error uploading zip file : " + e.getMessage());
             }
         });
     }
