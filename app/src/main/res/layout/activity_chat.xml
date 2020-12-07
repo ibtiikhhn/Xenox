@@ -2,7 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@color/white"
+    android:background="@color/colorPrimary"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -11,7 +11,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"
-        android:background="@color/white"
+        android:background="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@+id/messageET"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -22,27 +22,28 @@
         android:id="@+id/messageET"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:padding="4dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:layout_marginStart="8dp"
         android:layout_marginBottom="8dp"
+        android:textCursorDrawable="@null"
         android:background="@drawable/round_corner_textinput"
         android:hint="Enter your message here"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textColorHint="@color/text_color_light_grey"
-        android:inputType="textShortMessage"
+        android:inputType="textImeMultiLine|textMultiLine"
         android:singleLine="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/sendEt"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <ImageButton
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/sendEt"
-        android:layout_width="wrap_content"
+        android:layout_width="32dp"
         android:layout_height="0dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:background="@android:color/transparent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/messageET"
@@ -61,7 +62,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/colorPrimary">
+            android:background="@color/colorPrimaryDark">
 
             <ImageButton
                 android:id="@+id/chat_videoCallBt"

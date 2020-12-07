@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:elevation="4dp"
+    android:layout_margin="4dp"
+    app:cardCornerRadius="4dp"
+    android:background="@color/colorPrimaryDark"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:background="@color/white"
+        android:background="@color/colorPrimaryDark"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -27,7 +31,7 @@
             android:layout_marginStart="16dp"
             android:text="Mudasir Arif"
             android:textSize="18sp"
-            android:textColor="@color/black"
+            android:textColor="@color/white"
             android:textStyle="bold"
             app:layout_constraintStart_toEndOf="@+id/searchImage"
             app:layout_constraintTop_toTopOf="@+id/searchImage" />
@@ -47,7 +51,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:background="@color/white"
+            android:background="@color/colorPrimary"
             app:layout_constraintBottom_toBottomOf="@+id/searchImage"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/searchImage"
@@ -58,7 +62,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:backgroundTint="@color/colorPrimary"
+            android:backgroundTint="@color/colorAccent"
             app:layout_constraintBottom_toBottomOf="@+id/searchAudioCallBT"
             app:layout_constraintEnd_toEndOf="@+id/searchChatBT"
             app:layout_constraintHorizontal_bias="0.5"
@@ -73,7 +77,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp"
-            android:backgroundTint="@color/colorPrimary"
+            android:backgroundTint="@color/colorAccent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/searchVideoCallBT"
             app:layout_constraintHorizontal_bias="0.5"
@@ -81,4 +85,4 @@
             app:layout_constraintTop_toBottomOf="@+id/searchImage"
             app:srcCompat="@drawable/ic_baseline_call_24" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

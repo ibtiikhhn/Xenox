@@ -17,14 +17,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.codies.Tattle.Models.Chat;
+import com.codies.Tattle.Models.ChatList;
 import com.codies.Tattle.Models.User;
 import com.codies.Tattle.R;
 import com.codies.Tattle.Services.CallInitiaterHandler;
 import com.codies.Tattle.Services.CallService;
 import com.codies.Tattle.Utils.Consts;
-import com.codies.Tattle.Utils.MessageAdapter;
+import com.codies.Tattle.Adapters.MessageAdapter;
 import com.codies.Tattle.OtherUtils.SharedPrefs;
 import com.codies.Tattle.Utils.SharedPrefsHelper;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -46,7 +49,7 @@ public class ChatActivity extends AppCompatActivity {
     public static final String TAG = "HOLLO";
     RecyclerView recyclerView;
     EditText text;
-    ImageButton send;
+    AppCompatImageView send;
     ImageButton audioCall;
     ImageButton videoCall;
     MessageAdapter messageAdapterUser;
@@ -60,9 +63,11 @@ public class ChatActivity extends AppCompatActivity {
     String senderId;
     String receiverId;
     FirebaseAuth mAuth;
+    String combinedId;
     String userEmail;
     CallInitiaterHandler callInitiaterHandler;
     QBUser opponentUser;
+
 
 
 
@@ -81,6 +86,7 @@ public class ChatActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         Intent intent = getIntent();
         receiverId = intent.getStringExtra("userId");
+        combinedId = intent.getStringExtra("combinedId");
         senderId = mAuth.getCurrentUser().getUid();
         chatList = new ArrayList<>();
         messageAdapterUser = new MessageAdapter(this,senderId);
@@ -90,11 +96,9 @@ public class ChatActivity extends AppCompatActivity {
         linearLayoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(messageAdapterUser);
-        getCurrentUserData();
+        getReceiverUserData(receiverId);
         readMessages();
         callInitiaterHandler = new CallInitiaterHandler(getApplicationContext(), ChatActivity.this);
-
-
 
         imageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -143,19 +147,40 @@ public class ChatActivity extends AppCompatActivity {
 
     public void sendMessage(String message) {
         Chat chat = new Chat(senderId, receiverId, message);
-        reference.child("Chats").push().setValue(chat);
-
-        reference.child("ChatList").child(senderId).child(receiverId).addListenerForSingleValueEvent(new ValueEventListener() {
+        reference.child("Messages").child(setOneToOneChat(senderId, receiverId)).push().setValue(chat);
+        ChatList chatList = new ChatList(globalUser.getName(), globalUser.getImageUrl(), setOneToOneChat(senderId, receiverId), message, senderId, receiverId);
+        reference.child("UserChatList").child(mAuth.getCurrentUser().getUid()).child(setOneToOneChat(senderId,receiverId)).setValue(chatList).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (!dataSnapshot.exists()) {
-                    reference.child("ChatList").child(senderId).child(receiverId).child("id").setValue(receiverId);
+            public void onSuccess(Void aVoid) {
+                reference.child("UserChatList").child(receiverId).child(setOneToOneChat(senderId,receiverId)).setValue(chatList).addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.i(TAG, "onSuccess: succesullly sent message ");
+                    }
+                });
+            }
+        });
+    }
+
+    public void readMessages() {
+        reference.child("Messages").child(setOneToOneChat(senderId, receiverId)).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                chatList.clear();
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    Chat chat = dataSnapshot.getValue(Chat.class);
+                    if (chat != null) {
+                        chatList.add(chat);
+                        Log.i(TAG, "onDataChange: "+chat.getMessage());
+                    }
                 }
+                messageAdapterUser.setList(chatList);
+                Log.i(TAG, "onDataChange: list has been set ");
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.i(TAG, "onCancelled: " + error.getMessage());
             }
         });
     }
@@ -171,33 +196,7 @@ public class ChatActivity extends AppCompatActivity {
         callInitiaterHandler.clearAppNotifications();
     }
 
-    public void readMessages() {
-        reference.child("Chats").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                chatList.clear();
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    Chat chat = snapshot.getValue(Chat.class);
-                    if (chat != null) {
-                        if (chat.getReceiver().equals(receiverId) && chat.getSender().equals(senderId) ||
-                                chat.getReceiver().equals(senderId) && chat.getSender().equals(receiverId)) {
-                            chatList.add(chat);
-                        }
-                    } else {
-                        Toast.makeText(ChatActivity.this, "No Chat Exists!", Toast.LENGTH_SHORT).show();
-                    }
-                }
-                messageAdapterUser.setList(chatList);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-    }
-
-    public void getCurrentUserData() {
+    public void getReceiverUserData(String receiverId) {
         if (mAuth.getCurrentUser() != null) {
             reference.child("users").addValueEventListener(new ValueEventListener() {
                 @Override
@@ -253,5 +252,17 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
         return qbUserr[0];
+    }
+
+    private String setOneToOneChat(String senderId, String receiverId) {
+        int compare = senderId.compareTo(receiverId);
+        if (compare < 0) {
+            //a is smaller
+            return senderId +"_"+ receiverId;
+        }
+        else if (compare > 0) {
+            //a is larger
+            return receiverId +"_"+ senderId;
+        } else return null;
     }
 }

@@ -2,7 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@color/white"
+    android:background="@color/colorPrimary"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".UI.Activities.SearchActivity">
@@ -30,12 +30,12 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/colorPrimary">
+            android:background="@color/colorPrimaryDark">
 
 
             <ImageButton
                 android:id="@+id/searchBT"
-                android:background="@color/colorPrimary"
+                android:background="@color/colorPrimaryDark"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
@@ -50,8 +50,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
-                android:ems="10"
+                android:maxLines="1"
+                android:textCursorDrawable="@null"
                 android:hint="Search Email"
+                android:textColorHint="@color/text_color_light_grey"
                 android:inputType="textWebEmailAddress|text"
                 app:layout_constraintBottom_toBottomOf="@+id/searchExitBt"
                 app:layout_constraintEnd_toStartOf="@+id/searchBT"
@@ -60,7 +62,7 @@
 
             <ImageButton
                 android:id="@+id/searchExitBt"
-                android:background="@color/colorPrimary"
+                android:background="@color/colorPrimaryDark"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -78,9 +80,7 @@
         layout="@layout/cv_search"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_margin="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"

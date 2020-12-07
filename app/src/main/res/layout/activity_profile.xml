@@ -2,7 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@color/white"
+    android:background="@color/colorPrimary"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -20,12 +20,13 @@
         android:id="@+id/editNameET"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:padding="4dp"
+        android:paddingStart="16dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
+        android:textCursorDrawable="@null"
         android:textColorHint="@color/text_color_light_grey"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:background="@drawable/round_corner_textinput"
         android:hint="Enter Name"
         android:inputType="textPersonName"
@@ -39,7 +40,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="Save Profile"
-        android:textColor="#FFFFFF"
+        android:backgroundTint="@color/colorAccent"
+        android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="@+id/editNameET"
         app:layout_constraintStart_toStartOf="@+id/editNameET"
         app:layout_constraintTop_toBottomOf="@+id/editNameET" />
@@ -49,10 +51,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
+        app:backgroundTint="@color/colorAccent"
+        app:tint="@color/white"
         app:layout_constraintBottom_toBottomOf="@+id/editProfileImg"
         app:layout_constraintEnd_toEndOf="@+id/editProfileImg"
         app:layout_constraintTop_toBottomOf="@+id/editProfileImg"
-        app:srcCompat="@drawable/ic_baseline_add_a_photo_24" />
+        app:srcCompat="@drawable/ic_baseline_add_a_photo_24"
+        android:focusable="true" />
 
     <ImageButton
         android:id="@+id/closeBt"
@@ -74,5 +79,15 @@
         app:layout_constraintEnd_toEndOf="@+id/editProfileImg"
         app:layout_constraintStart_toStartOf="@+id/editProfileImg"
         app:layout_constraintTop_toTopOf="@+id/editProfileImg" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:text="Name"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/editNameET"
+        app:layout_constraintStart_toStartOf="@+id/editNameET" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

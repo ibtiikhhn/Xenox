@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/frameLayout4"
+    android:background="@color/colorPrimary"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -10,7 +11,7 @@
         android:id="@+id/cardView"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:background="@color/colorAccent"
+        android:background="@color/colorPrimary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -18,19 +19,19 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/colorPrimary">
+            android:background="@color/colorPrimaryDark">
 
             <com.mikhaellopez.circularimageview.CircularImageView
                 android:id="@+id/profileBT"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginStart="8dp"
+                android:clickable="true"
+                android:focusable="true"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/profile"
-                android:clickable="true"
-                android:focusable="true"/>
+                app:srcCompat="@drawable/profile" />
 
             <TextView
                 android:id="@+id/toolbarName"
@@ -50,14 +51,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:background="@color/colorPrimary"
+                android:background="@color/colorPrimaryDark"
+                android:clickable="true"
+                android:focusable="true"
                 android:padding="8dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_baseline_exit_to_app_24"
-                android:clickable="true"
-                android:focusable="true" />
+                app:srcCompat="@drawable/ic_baseline_exit_to_app_24" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.cardview.widget.CardView>
@@ -66,11 +67,13 @@
         android:id="@+id/chatsRVVV"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@color/white"
+        android:background="@color/colorPrimaryDark"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardView" />
+        app:layout_constraintTop_toBottomOf="@+id/cardView"
+        tools:listitem="@layout/chats_counsellor"
+        />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/newChatBT"
@@ -78,11 +81,12 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:background="@color/colorAccent"
-        android:backgroundTint="@color/colorAccent"
+        app:backgroundTint="@color/colorAccent"
+        app:tint="@color/white"
         android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/chatsRVVV"
         app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/ic_chat_black_24dp" />
+        app:srcCompat="@drawable/ic_chat_black_24dp"
+        android:focusable="true" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
