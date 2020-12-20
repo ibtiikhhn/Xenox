@@ -2,6 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/fragmentIncomeCall"
+    android:background="@color/colorPrimary"
     style="@style/MatchParent">
 
     <LinearLayout
@@ -23,7 +24,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:paddingTop="@dimen/padding_top_large"
-            android:textColor="@color/text_color_caller_name"
+            android:textColor="@color/white"
             android:textSize="@dimen/caller_name_text_size" />
 
         <TextView
@@ -31,7 +32,7 @@
             style="@style/WrapContent"
             android:layout_gravity="center"
             android:layout_margin="@dimen/margin_common"
-            android:textColor="@color/text_color_also_on_call"
+            android:textColor="@color/white"
             android:textSize="@dimen/text_size"
             android:visibility="invisible"
             tools:text="10:15"
@@ -42,7 +43,7 @@
             style="@style/WrapContent"
             android:layout_marginTop="24dp"
             android:text="@string/also_on_call"
-            android:textColor="@color/text_color_also_on_call"
+            android:textColor="@color/white"
             android:textSize="@dimen/also_on_call_text_size" />
 
         <TextView
@@ -50,7 +51,7 @@
             style="@style/WrapContent"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:textColor="@color/text_color_other_inc_users"
+            android:textColor="@color/white"
             android:textSize="@dimen/other_inc_users_text_size"
             tools:text="@string/user_list_on_call" />
     </LinearLayout>

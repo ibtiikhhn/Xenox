@@ -60,7 +60,6 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         CircularImageView circularImageView;
         TextView user;
         TextView message;
-
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
             circularImageView = itemView.findViewById(R.id.userIMMG);
@@ -69,7 +68,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    clickListener.onClick(userList.get(getAdapterPosition()).getReceiverId(),userList.get(getAdapterPosition()).getReceiverId(), userList.get(getAdapterPosition()).getCombinedId());
+                    clickListener.onClick(userList.get(getAdapterPosition()).getSenderId(),userList.get(getAdapterPosition()).getReceiverId(), userList.get(getAdapterPosition()).getCombinedId());
                 }
             });
         }

@@ -16,12 +16,20 @@
         android:background="@drawable/background_right"
         android:padding="8dp"
         android:singleLine="false"
-        android:text="kldsjf sdjfksd fkdsjflksdj kldsjf djksld "
+        android:text="TextView"
         android:textColor="@color/white"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:layout_gravity="end"
+        android:id="@+id/chatIV"
+        android:layout_width="275dp"
+        android:layout_height="300dp"
+        android:layout_margin="4dp"
+        android:background="@drawable/background_right" />
 
 
 </LinearLayout>

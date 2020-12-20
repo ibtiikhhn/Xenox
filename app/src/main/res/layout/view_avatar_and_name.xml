@@ -3,6 +3,7 @@
     style="@style/WrapContent"
     android:layout_gravity="center_horizontal|center_vertical"
     android:layout_marginTop="@dimen/padding_actionbar"
+    android:background="@color/colorPrimary"
     android:orientation="vertical">
 
     <ImageView
@@ -15,6 +16,6 @@
         android:maxLength="25"
         android:maxLines="1"
         android:paddingTop="24dp"
-        android:textColor="@color/text_color_caller_name"
+        android:textColor="@color/white"
         android:textSize="@dimen/caller_name_text_size" />
 </LinearLayout>

@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/layout_background_outgoing_screen"
     style="@style/MatchParent"
+    android:background="@color/colorPrimary"
     android:orientation="vertical">
 
     <View
@@ -16,6 +17,7 @@
         android:paddingLeft="@dimen/padding_outgoing_screen"
         android:paddingRight="@dimen/padding_outgoing_screen"
         android:textSize="@dimen/text_size_call"
+        android:textColor="@color/white"
         android:textStyle="normal"
         tools:text="John, Bob, Merlin" />
 
@@ -25,6 +27,7 @@
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         android:layout_weight="3"
+        android:textColor="@color/white"
         android:gravity="center_horizontal"
         android:text="@string/ringing"
         android:textSize="@dimen/text_size_ringing"

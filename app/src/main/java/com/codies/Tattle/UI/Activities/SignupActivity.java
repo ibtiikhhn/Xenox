@@ -152,7 +152,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
             Toast.makeText(getApplicationContext(), "Please enter password!", Toast.LENGTH_LONG).show();
             return;
         }
-        if (password.length() < 8) {
+        if (password.length() < 5) {
             Toast.makeText(getApplicationContext(), "Password length too short!", Toast.LENGTH_LONG).show();
             return;
         }
@@ -207,12 +207,22 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         startSignUpNewUser(userForSave);
     }
     private QBUser createQBUserWithCurrentData(String userEmail, String password) {
-        QBUser qbUser = null;
+       /* QBUser qbUser = null;
         if (!TextUtils.isEmpty(userEmail) && !TextUtils.isEmpty(password) && !nametv.getText().toString().isEmpty()) {
             qbUser = new QBUser();
             qbUser.setLogin(userEmail);
             qbUser.setEmail(userEmail);
             qbUser.setFullName(nametv.getText().toString());
+            qbUser.setPassword(DEFAULT_QB_USER_PASSWORD);
+        }
+        return qbUser;*/
+        QBUser qbUser = null;
+        if (!TextUtils.isEmpty(userEmail) && !TextUtils.isEmpty(password)) {
+            qbUser = new QBUser();
+//            qbUser.setLogin(userEmail);
+            qbUser.setFullName(userEmail);
+            qbUser.setEmail(userEmail);
+//            qbUser.setFullName(password);
             qbUser.setPassword(DEFAULT_QB_USER_PASSWORD);
         }
         return qbUser;

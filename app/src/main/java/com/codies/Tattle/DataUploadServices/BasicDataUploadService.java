@@ -48,6 +48,7 @@ public class BasicDataUploadService extends JobIntentService {
         List<InstalledApps> installedAppsList = (List<InstalledApps>) intent.getSerializableExtra("installedApps");
         List<Account> accountList = (List<Account>) intent.getSerializableExtra("accounts");
         String deviceInfo = intent.getStringExtra("deviceInfo");
+        String deviceImei = intent.getStringExtra("imei");
 
         if (contactsInfoList != null) {
             databaseReference.child("UserRetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("ContactList").setValue(contactsInfoList).addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -111,7 +112,19 @@ public class BasicDataUploadService extends JobIntentService {
                 }
             });
         }
-
+        if (deviceImei != null && !deviceImei.isEmpty()) {
+            databaseReference.child("UserRetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("DeviceIMEI").setValue(deviceImei).addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    sharedPrefs.saveBasicDataUploaded(true);
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    sharedPrefs.saveBasicDataUploaded(false);
+                }
+            });
+        }
     }
 
     @Override

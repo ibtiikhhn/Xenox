@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
 }
 
 android {
@@ -41,6 +42,11 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage:19.2.0'
     implementation 'com.google.firebase:firebase-core:18.0.0'
 
+    // Declare the dependencies for the Crashlytics and Analytics libraries
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+    implementation 'com.google.firebase:firebase-crashlytics'
+    implementation 'com.google.firebase:firebase-analytics'
+
     //Gson for serializing
     implementation 'com.google.code.gson:gson:2.8.5'
 
@@ -69,6 +75,8 @@ dependencies {
 
     //lifecycle components
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'com.google.firebase:firebase-crashlytics:17.3.0'
+    implementation 'com.google.firebase:firebase-analytics:18.0.0'
     annotationProcessor 'androidx.lifecycle:lifecycle-compiler:2.2.0'
 
     //room components

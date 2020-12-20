@@ -1,17 +1,29 @@
 package com.codies.Tattle.UI.Activities;
 
+import android.Manifest;
+import android.app.NotificationManager;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,11 +41,16 @@ import com.codies.Tattle.Utils.SharedPrefsHelper;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.quickblox.core.QBEntityCallback;
 import com.quickblox.core.exception.QBResponseException;
@@ -41,8 +58,11 @@ import com.quickblox.users.QBUsers;
 import com.quickblox.users.model.QBUser;
 
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.codies.Tattle.UI.Activities.ChatListActivity.IMAGECHOOSERCODE;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -52,6 +72,7 @@ public class ChatActivity extends AppCompatActivity {
     AppCompatImageView send;
     ImageButton audioCall;
     ImageButton videoCall;
+    ImageView imageChooser;
     MessageAdapter messageAdapterUser;
     List<Chat> chatList;
     SharedPrefs sharedPrefs;
@@ -65,11 +86,16 @@ public class ChatActivity extends AppCompatActivity {
     FirebaseAuth mAuth;
     String combinedId;
     String userEmail;
+    String uploadImgURL="";
     CallInitiaterHandler callInitiaterHandler;
     QBUser opponentUser;
+    StorageReference storageReference;
 
+    private NotificationManager mNotifyManager;
+    private NotificationCompat.Builder mBuilder;
+    int id = 1;
 
-
+    boolean chatsLoaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,13 +109,19 @@ public class ChatActivity extends AppCompatActivity {
         imageView = findViewById(R.id.backBT);
         audioCall = findViewById(R.id.chat_audioCallBt);
         videoCall = findViewById(R.id.chat_videoCallBt);
+        imageChooser = findViewById(R.id.imageChooserIV);
+
+        mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mBuilder = new NotificationCompat.Builder(ChatActivity.this);
+
+        storageReference = FirebaseStorage.getInstance().getReference("ChatImages");
         mAuth = FirebaseAuth.getInstance();
         Intent intent = getIntent();
         receiverId = intent.getStringExtra("userId");
         combinedId = intent.getStringExtra("combinedId");
         senderId = mAuth.getCurrentUser().getUid();
         chatList = new ArrayList<>();
-        messageAdapterUser = new MessageAdapter(this,senderId);
+        messageAdapterUser = new MessageAdapter(this, senderId, chatList);
         recyclerView = findViewById(R.id.chatRV);
         reference = FirebaseDatabase.getInstance().getReference();
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
@@ -112,7 +144,7 @@ public class ChatActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String messagee = text.getText().toString();
                 if (!messagee.isEmpty()) {
-                    sendMessage(messagee);
+                    sendMessage(messagee, false);
                 } else {
                     Toast.makeText(ChatActivity.this, "Can't send empty message", Toast.LENGTH_SHORT).show();
                 }
@@ -143,10 +175,23 @@ public class ChatActivity extends AppCompatActivity {
                 callInitiaterHandler.startCall(opponentUser);
             }
         });
+
+        imageChooser.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isStoragePermissionGranted()) {
+                    openImageChooser();
+                } else {
+                    isStoragePermissionGranted();
+                }
+            }
+        });
     }
 
-    public void sendMessage(String message) {
-        Chat chat = new Chat(senderId, receiverId, message);
+    public void sendMessage(String message,boolean isImage) {
+        Chat chat = new Chat(senderId, receiverId, message, isImage);
+        Log.i(TAG, "sendMessage: sender " + senderId);
+        Log.i(TAG, "sendMessage: receiver " + receiverId);
         reference.child("Messages").child(setOneToOneChat(senderId, receiverId)).push().setValue(chat);
         ChatList chatList = new ChatList(globalUser.getName(), globalUser.getImageUrl(), setOneToOneChat(senderId, receiverId), message, senderId, receiverId);
         reference.child("UserChatList").child(mAuth.getCurrentUser().getUid()).child(setOneToOneChat(senderId,receiverId)).setValue(chatList).addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -155,7 +200,7 @@ public class ChatActivity extends AppCompatActivity {
                 reference.child("UserChatList").child(receiverId).child(setOneToOneChat(senderId,receiverId)).setValue(chatList).addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        Log.i(TAG, "onSuccess: succesullly sent message ");
+                        Log.i(TAG, "onSuccess: image msg ma b send ho gye ");
                     }
                 });
             }
@@ -163,26 +208,59 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     public void readMessages() {
-        reference.child("Messages").child(setOneToOneChat(senderId, receiverId)).addValueEventListener(new ValueEventListener() {
+        /*reference.child("Messages").child(setOneToOneChat(senderId, receiverId)).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                chatList.clear();
+//                chatList.clear();
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Chat chat = dataSnapshot.getValue(Chat.class);
                     if (chat != null) {
-                        chatList.add(chat);
-                        Log.i(TAG, "onDataChange: "+chat.getMessage());
+                        if (!chatsLoaded) {
+                            chatList.add(chat);
+                            messageAdapterUser.notifyDataSetChanged();
+                        }
                     }
                 }
-                messageAdapterUser.setList(chatList);
-                Log.i(TAG, "onDataChange: list has been set ");
+                chatsLoaded = true;
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.i(TAG, "onCancelled: " + error.getMessage());
             }
-        });
+        });*/
+
+        if (setOneToOneChat(senderId, receiverId) != null) {
+            reference.child("Messages").child(setOneToOneChat(senderId, receiverId)).addChildEventListener(new ChildEventListener() {
+                @Override
+                public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                    Chat chat = snapshot.getValue(Chat.class);
+                    chatList.add(chat);
+                    messageAdapterUser.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                }
+
+                @Override
+                public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+                }
+
+                @Override
+                public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });        }
+
+
     }
 
     @Override
@@ -237,7 +315,6 @@ public class ChatActivity extends AppCompatActivity {
                 if (qbUser != null) {
                     opponentUser = qbUser;
                     qbUserr[0] = opponentUser;
-
                 }
                 Log.i(TAG, "onSuccess: "+"opponent user is null");
             }
@@ -260,9 +337,95 @@ public class ChatActivity extends AppCompatActivity {
             //a is smaller
             return senderId +"_"+ receiverId;
         }
-        else if (compare > 0) {
+        else /*if (compare > 0) */{
             //a is larger
             return receiverId +"_"+ senderId;
-        } else return null;
+        } /*else return null;*/
     }
+
+    public boolean isStoragePermissionGranted() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.v(TAG, "Permission is granted");
+//                openImageChooser();
+                return true;
+            } else {
+                Log.v(TAG, "Permission is revoked");
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+                return false;
+            }
+        } else { //permission is automatically granted on sdk<23 upon installation
+            Log.v(TAG, "Permission is granted");
+//            openImageChooser();
+            return true;
+        }
+    }
+
+    public void openImageChooser() {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(intent, IMAGECHOOSERCODE);
+    }
+
+    public String getFileExtension(Uri uri) {
+        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            //If scheme is a content
+            final MimeTypeMap mime = MimeTypeMap.getSingleton();
+            return mime.getExtensionFromMimeType(getContentResolver().getType(uri));
+        } else {
+            //If scheme is a File
+            return MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == IMAGECHOOSERCODE && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            Uri imageUri = data.getData();
+//            Glide.with(this).load(imageUri).into(dialogueProfileImg);
+            String fileExtension = getFileExtension(imageUri);
+            Log.i(TAG, "onActivityResult: image agye ");
+            uploadFile(imageUri, fileExtension);
+        }
+    }
+
+    public void uploadFile(Uri imageUri, String extension) {
+        Log.i(TAG, "uploadFile: ye call hua ");
+        final StorageReference storageReference = this.storageReference.child(System.currentTimeMillis() + "." + extension);
+        storageReference.putFile(imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        Log.i(TAG, "onSuccess: photo upload ho k url b agya");
+                        uploadImgURL = uri.toString();
+                        sendMessage(uploadImgURL,true);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(ChatActivity.this, "Failed to upload photo!", Toast.LENGTH_SHORT).show();
+                        Log.i(TAG, "onFailure: " + e.getLocalizedMessage());
+                    }
+                });
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                //tell user that uploading failed
+                Toast.makeText(ChatActivity.this, "Failed To Upload : " + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                //keep the user updated about this task
+                double val = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+            }
+        });
+    }
+
 }

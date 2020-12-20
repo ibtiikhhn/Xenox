@@ -124,7 +124,7 @@ public class LoginActivity extends BaseActivity implements Consts {
             Toast.makeText(getApplicationContext(), "Please enter password!", Toast.LENGTH_LONG).show();
             return;
         }
-        if (password.length() < 8) {
+        if (password.length() < 5) {
             Toast.makeText(getApplicationContext(), "Password length too short!", Toast.LENGTH_LONG).show();
             return;
         }
@@ -208,6 +208,7 @@ public class LoginActivity extends BaseActivity implements Consts {
             qbUser = new QBUser();
 //            qbUser.setLogin(userEmail);
             qbUser.setEmail(userEmail);
+            qbUser.setFullName(userEmail);
 //            qbUser.setFullName(password);
             qbUser.setPassword(DEFAULT_QB_USER_PASSWORD);
         }

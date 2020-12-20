@@ -1,5 +1,6 @@
 package com.codies.Tattle.OtherUtils;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
@@ -15,6 +16,8 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
@@ -178,8 +181,34 @@ public class DeviceInfo {
             return true;
     }
 
-    public void getImei() {
+    public String getIMEIDeviceId(Context context) {
 
+        String deviceId = "";
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+        } else {
+            final TelephonyManager mTelephony = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (context.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                    return "";
+                }
+            }
+            /*assert mTelephony != null;
+            if (mTelephony.getDeviceId() != null)
+            {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                {
+                    deviceId = mTelephony.getImei();
+                }else {
+                    deviceId = mTelephony.getDeviceId();
+             *//*   }
+            } else {
+                deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+            }
+        }
+        Log.d("deviceId", deviceId);*/
+        }
+        return deviceId;
     }
-
 }
