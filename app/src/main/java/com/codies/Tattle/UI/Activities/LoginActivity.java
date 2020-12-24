@@ -3,11 +3,13 @@ package com.codies.Tattle.UI.Activities;
 import androidx.annotation.NonNull;
 
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -72,6 +74,7 @@ public class LoginActivity extends BaseActivity implements Consts {
             @Override
             public void onClick(View v) {
                 loginUserAccount();
+                closeKeyboard();
             }
         });
 
@@ -110,7 +113,6 @@ public class LoginActivity extends BaseActivity implements Consts {
     }
 
     private void loginUserAccount() {
-        progressBar.setVisibility(View.VISIBLE);
 
         String email, password;
         email = emailTV.getText().toString();
@@ -128,7 +130,8 @@ public class LoginActivity extends BaseActivity implements Consts {
             Toast.makeText(getApplicationContext(), "Password length too short!", Toast.LENGTH_LONG).show();
             return;
         }
-
+        progressBar.setVisibility(View.VISIBLE);
+        loginBtn.setClickable(false);
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
@@ -137,14 +140,15 @@ public class LoginActivity extends BaseActivity implements Consts {
 //                            Toast.makeText(getApplicationContext(), "Login successful!", Toast.LENGTH_LONG).show();
                             userFB = new User();
                             userFB.setEmail(email);
-                            userForSave = createQBUserWithCurrentData(email, password);
-                            Log.i(TAG, "onComplete: " + userForSave.getEmail());
-                            Log.i(TAG, "onComplete: "+userForSave.getPassword());
+                            userForSave = createQBUserWithCurrentData(email, DEFAULT_QB_USER_PASSWORD);
+                            Log.i(TAG, "onComplete: email " + userForSave.getEmail());
+                            Log.i(TAG, "onComplete: password "+userForSave.getPassword());
                             startSignUpNewUser(userForSave);
 
                         } else {
                             Log.i(TAG, "onComplete: " + task.getException().getMessage());
                             Toast.makeText(getApplicationContext(), "Login failed! Please try again later", Toast.LENGTH_LONG).show();
+                            loginBtn.setClickable(true);
                             progressBar.setVisibility(View.GONE);
                         }
                     }
@@ -156,11 +160,11 @@ public class LoginActivity extends BaseActivity implements Consts {
         requestExecutor.signInUser(qbUser, new QBEntityCallbackImpl<QBUser>() {
             @Override
             public void onSuccess(QBUser user, Bundle params) {
-                Log.d(TAG, "SignIn Successful");
-                Log.i(TAG, "onSuccess: "+user.toString());
+                Log.i(TAG, "SignIn Successful success py aya hai");
                 sharedPrefsHelper.saveQbUser(userForSave);
 //                progressBar.setVisibility(View.GONE);
-                updateUserOnServer(user);
+                loginToChat(userForSave);
+//                updateUserOnServer(user);
 
 
                 //dont know what this method does, if doesn't login, check this with the sample app
@@ -169,9 +173,10 @@ public class LoginActivity extends BaseActivity implements Consts {
 
             @Override
             public void onError(QBResponseException responseException) {
-                Log.d(TAG, "Error SignIn" + responseException.getMessage());
+                Log.i(TAG, "Error SignIn error py aya hai" + responseException.getMessage());
            /*     hideProgressDialog();
                 ToastUtils.longToast(R.string.sign_in_error);*/
+                loginBtn.setClickable(true);
                 Toast.makeText(LoginActivity.this, "Error Signing up! Try again later", Toast.LENGTH_SHORT).show();
             }
         });
@@ -183,18 +188,21 @@ public class LoginActivity extends BaseActivity implements Consts {
         requestExecutor.signUpNewUser(newUser, new QBEntityCallback<QBUser>() {
                     @Override
                     public void onSuccess(QBUser result, Bundle params) {
-                        Log.d(TAG, "SignUp Successful");
-                        saveUserData(newUser);
+                        Log.i(TAG, "SignUp new user py success aya ");
+//                        saveUserData(newUser);
                         loginToChat(result);
                     }
 
                     @Override
                     public void onError(QBResponseException e) {
-                        Log.d(TAG, "Error SignUp" + e.getMessage());
+                        loginBtn.setClickable(true);
+                        Log.i(TAG, "Error py agya hai" + e.getMessage());
                         if (e.getHttpStatusCode() == Consts.ERR_LOGIN_ALREADY_TAKEN_HTTP_STATUS) {
+                            Log.i(TAG, "onError: if py aya hai");
                             signInCreatedUser(newUser);
                         } else {
 //                            hideProgressDialog();
+                            Log.i(TAG, "onError: else py aya hai");
                             ToastUtils.longToast(R.string.sign_up_error);
                         }
                     }
@@ -221,28 +229,31 @@ public class LoginActivity extends BaseActivity implements Consts {
             @Override
             public void onSuccess(QBUser qbUser, Bundle bundle) {
 //                OpponentsActivity.start(LoginActivity.this);
-                sharedPrefs.saveUserData(userFB);
+                /*sharedPrefs.saveUserData(userFB);
                 sharedPrefs.loginUser(true);
                 saveUserData(user);
                 Intent intent = new Intent(LoginActivity.this, ChatListActivity.class);
                 startActivity(intent);
-                finish();
+                finish();*/
             }
 
             @Override
             public void onError(QBResponseException e) {
+                Log.i(TAG, "onError:update useronserver wala error hai = "+e.getLocalizedMessage());
                 ToastUtils.longToast(R.string.update_user_error);
             }
         });
     }
 
     private void loginToChat(final QBUser qbUser) {
-        qbUser.setPassword(App.USER_DEFAULT_PASSWORD);
+        Log.i(TAG, "loginToChat: login to chat py agya");
+//        qbUser.setPassword(App.USER_DEFAULT_PASSWORD);
         userForSave = qbUser;
         startLoginService(qbUser);
     }
 
     private void startLoginService(QBUser qbUser) {
+        Log.i(TAG, "startLoginService login service py agya");
         Intent tempIntent = new Intent(this, LoginService.class);
         PendingIntent pendingIntent = createPendingResult(Consts.EXTRA_LOGIN_RESULT_CODE, tempIntent, 0);
         LoginService.start(this, qbUser, pendingIntent);
@@ -254,17 +265,26 @@ public class LoginActivity extends BaseActivity implements Consts {
         if (resultCode == Consts.EXTRA_LOGIN_RESULT_CODE) {
             boolean isLoginSuccess = data.getBooleanExtra(Consts.EXTRA_LOGIN_RESULT, false);
             String errorMessage = data.getStringExtra(Consts.EXTRA_LOGIN_ERROR_MESSAGE);
+            Log.i(TAG, "onActivityResult:User for save = " + userForSave.getEmail());
+            loginBtn.setClickable(true);
 
             if (isLoginSuccess) {
+                sharedPrefs.saveUserData(userFB);
+                sharedPrefs.loginUser(true);
                 saveUserData(userForSave);
-                signInCreatedUser(userForSave);
+                Intent intent = new Intent(LoginActivity.this, ChatListActivity.class);
+                startActivity(intent);
+                finish();
+//                signInCreatedUser(userForSave);
             } else {
+                Log.i(TAG, "onActivityResult: " + errorMessage);
                 ToastUtils.longToast(getString(R.string.login_chat_login_error) + errorMessage);
             }
         }
     }
 
     private void saveUserData(QBUser qbUser) {
+        Log.i(TAG, "saveUserData: "+qbUser.toString());
         SharedPrefsHelper sharedPrefsHelper = SharedPrefsHelper.getInstance();
         sharedPrefsHelper.saveQbUser(qbUser);
     }
@@ -277,5 +297,27 @@ public class LoginActivity extends BaseActivity implements Consts {
         forgotPassword = findViewById(R.id.forgotPassword);
         progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
+    }
+
+    private void closeKeyboard()
+    {
+        // this will give us the view
+        // which is currently focus
+        // in this layout
+        View view = this.getCurrentFocus();
+        // if nothing is currently
+        // focus then this will protect
+        // the app from crash
+        if (view != null) {
+            // now assign the system
+            // service to InputMethodManager
+            InputMethodManager manager
+                    = (InputMethodManager)
+                    getSystemService(
+                            Context.INPUT_METHOD_SERVICE);
+            manager
+                    .hideSoftInputFromWindow(
+                            view.getWindowToken(), 0);
+        }
     }
 }

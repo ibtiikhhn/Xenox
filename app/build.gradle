@@ -15,6 +15,12 @@ android {
         versionName "1.0"
         multiDexEnabled true
 
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
+
         android.defaultConfig.vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -38,8 +44,8 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     //firebase
     implementation 'com.google.firebase:firebase-auth:20.0.1'
-    implementation 'com.google.firebase:firebase-database:19.5.1'
-    implementation 'com.google.firebase:firebase-storage:19.2.0'
+    implementation 'com.google.firebase:firebase-database:19.6.0'
+    implementation 'com.google.firebase:firebase-storage:19.2.1'
     implementation 'com.google.firebase:firebase-core:18.0.0'
 
     // Declare the dependencies for the Crashlytics and Analytics libraries
@@ -48,7 +54,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
 
     //Gson for serializing
-    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.google.code.gson:gson:2.8.6'
 
     //add cardview
     implementation 'androidx.cardview:cardview:1.0.0'
@@ -80,14 +86,15 @@ dependencies {
     annotationProcessor 'androidx.lifecycle:lifecycle-compiler:2.2.0'
 
     //room components
-    implementation 'androidx.room:room-runtime:2.3.0-alpha03'
-    annotationProcessor 'androidx.room:room-compiler:2.3.0-alpha03'
+    implementation 'androidx.room:room-runtime:2.3.0-alpha04'
+    annotationProcessor 'androidx.room:room-compiler:2.3.0-alpha04'
 
     //glide for cache image
     implementation 'com.github.bumptech.glide:glide:4.10.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.10.0'
     implementation 'com.mikhaellopez:circularimageview:4.1.0'
 
+    implementation 'com.google.android.gms:play-services-basement:17.5.0'
 
     testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

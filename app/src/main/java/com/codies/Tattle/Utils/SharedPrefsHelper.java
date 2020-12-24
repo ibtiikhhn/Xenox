@@ -10,6 +10,7 @@ public class SharedPrefsHelper {
     private static final String SHARED_PREFS_NAME = "qb";
 
     private static final String QB_USER_ID = "qb_user_id";
+    private static final String QB_USER_EMAIL = "qb_user_email";
     private static final String QB_USER_LOGIN = "qb_user_login";
     private static final String QB_USER_PASSWORD = "qb_user_password";
     private static final String QB_USER_FULL_NAME = "qb_user_full_name";
@@ -77,6 +78,7 @@ public class SharedPrefsHelper {
         save(QB_USER_LOGIN, qbUser.getLogin());
         save(QB_USER_PASSWORD, qbUser.getPassword());
         save(QB_USER_FULL_NAME, qbUser.getFullName());
+        save(QB_USER_EMAIL,qbUser.getEmail());
         save(QB_USER_TAGS, qbUser.getTags().getItemsAsString());
     }
 
@@ -86,6 +88,7 @@ public class SharedPrefsHelper {
         delete(QB_USER_PASSWORD);
         delete(QB_USER_FULL_NAME);
         delete(QB_USER_TAGS);
+        delete(QB_USER_EMAIL);
     }
 
     public QBUser getQbUser() {
@@ -94,6 +97,7 @@ public class SharedPrefsHelper {
             String login = get(QB_USER_LOGIN);
             String password = get(QB_USER_PASSWORD);
             String fullName = get(QB_USER_FULL_NAME);
+            String email = get(QB_USER_EMAIL);
             String tagsInString = get(QB_USER_TAGS);
 
             StringifyArrayList<String> tags = null;
@@ -103,8 +107,9 @@ public class SharedPrefsHelper {
                 tags.add(tagsInString.split(","));
             }
 
-            QBUser user = new QBUser(login, password);
+            QBUser user = new QBUser(email, password);
             user.setId(id);
+            user.setEmail(email);
             user.setFullName(fullName);
             user.setTags(tags);
             return user;
@@ -115,7 +120,7 @@ public class SharedPrefsHelper {
 
     public boolean hasQbUser() {
 //        return has(QB_USER_LOGIN) && has(QB_USER_PASSWORD);
-        return has(QB_USER_LOGIN);
+        return has(QB_USER_EMAIL) && has(QB_USER_PASSWORD);
     }
 
     public void clearAllData() {

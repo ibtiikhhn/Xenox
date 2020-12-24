@@ -7,6 +7,7 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -15,6 +16,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
@@ -106,6 +108,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         regBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                closeKeyboard();
                 registerNewUser();
             }
         });
@@ -133,7 +136,6 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
 
 
     private void registerNewUser() {
-        progressBar.setVisibility(View.VISIBLE);
 
         String email, password, name;
         name = nametv.getText().toString();
@@ -156,6 +158,8 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
             Toast.makeText(getApplicationContext(), "Password length too short!", Toast.LENGTH_LONG).show();
             return;
         }
+        progressBar.setVisibility(View.VISIBLE);
+        regBtn.setClickable(false);
 
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
@@ -170,7 +174,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
                                     Toast.makeText(SignupActivity.this, "Wait, uploading photo!", Toast.LENGTH_SHORT).show();
                                 } else {
                                     user = new User(mAuth.getUid(), name, email, imageUrl, password);
-                                    signUpOnQuickblox(email, password);
+                                    signUpOnQuickblox(email, DEFAULT_QB_USER_PASSWORD);
                                 }
                             }
                         }).addOnFailureListener(new OnFailureListener() {
@@ -178,6 +182,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
                             public void onFailure(@NonNull Exception e) {
                                 Toast.makeText(getApplicationContext(), e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                                 progressBar.setVisibility(View.GONE);
+                                regBtn.setClickable(true);
                             }
                         });
                     }
@@ -189,6 +194,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
             public void onSuccess(Void aVoid) {
                 Log.i(TAG, "hellllllponSuccess: "+user.getEmail()+" "+user.getUserId()+" "+user.getName()+" "+user.getImageUrl()+" "+user.getPassword());
                 progressBar.setVisibility(View.GONE);
+                regBtn.setClickable(true);
                 startActivity(new Intent(SignupActivity.this, LoginActivity.class));
                 finish();
             }
@@ -196,6 +202,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
             @Override
             public void onFailure(@NonNull Exception e) {
                 Log.i(TAG, "onFailure: " + e.getLocalizedMessage());
+                regBtn.setClickable(true);
                 Toast.makeText(SignupActivity.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -244,6 +251,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
                         Log.i(TAG, "onError: "+ e.getErrors());
                         Log.i(TAG, "onError: " + e.getMessage());
                         progressBar.setVisibility(View.INVISIBLE);
+                        regBtn.setClickable(true);
                         if (e.getHttpStatusCode() == Consts.ERR_LOGIN_ALREADY_TAKEN_HTTP_STATUS) {
 //                            signInCreatedUser(newUser);
                             Toast.makeText(SignupActivity.this, "User Already Exists!", Toast.LENGTH_SHORT).show();
@@ -251,6 +259,7 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
                         } else {
                             Toast.makeText(SignupActivity.this, "An error occurred! Try again later.", Toast.LENGTH_SHORT).show();
                         }
+
                     }
                 }
         );
@@ -376,5 +385,12 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
             return MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
         }
     }
-
+    private void closeKeyboard()
+    {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager manager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            manager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
 }

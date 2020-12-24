@@ -1,6 +1,7 @@
 package com.codies.Tattle.Adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,13 +21,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatViewHolder> {
+
+    public static final String TAG = "ChatListAdapter";
+
     ChatClickListener clickListener;
     Context context;
     List<ChatList> userList;
+    String myId;
+    boolean sendReceiverName = false;
 
-    public ChatListAdapter(Context context, ChatClickListener clickListener) {
+    public ChatListAdapter(Context context, ChatClickListener clickListener, String myId) {
         this.context = context;
         this.clickListener = clickListener;
+        this.myId = myId;
         userList = new ArrayList<>();
     }
 
@@ -44,11 +51,27 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
 
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
-        holder.message.setText(userList.get(position).getLastMessage());
-        holder.user.setText(userList.get(position).getSenderName());
-        if (userList.get(position).getSenderIMG() != null && !userList.get(position).getSenderIMG().isEmpty()) {
-            Glide.with(context).load(userList.get(position).getSenderIMG()).into(holder.circularImageView);
+        ChatList chatList = userList.get(position);
+        holder.message.setText(chatList.getLastMessage());
+        holder.user.setText(chatList.getOpponentName());
+        if (chatList.getOpponentIMG() != null && !chatList.getOpponentIMG().isEmpty()) {
+            Glide.with(context).load(userList.get(position).getOpponentIMG()).into(holder.circularImageView);
         }
+
+        /*if (chatList.getSenderId().equals(myId)) {
+            sendReceiverName = true;
+            holder.user.setText(chatList.getReceiverName());
+            if (chatList.getReceiverIMG() != null && !chatList.getReceiverIMG().isEmpty()) {
+                Glide.with(context).load(userList.get(position).getReceiverIMG()).into(holder.circularImageView);
+            }
+        } else {
+            sendReceiverName = false;
+            holder.user.setText(chatList.getSenderName());
+            if (chatList.getSenderIMG() != null && !chatList.getSenderIMG().isEmpty()) {
+                Glide.with(context).load(userList.get(position).getSenderIMG()).into(holder.circularImageView);
+            }
+        }*/
+
     }
 
     @Override
@@ -60,6 +83,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         CircularImageView circularImageView;
         TextView user;
         TextView message;
+
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
             circularImageView = itemView.findViewById(R.id.userIMMG);
@@ -68,7 +92,13 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    clickListener.onClick(userList.get(getAdapterPosition()).getSenderId(),userList.get(getAdapterPosition()).getReceiverId(), userList.get(getAdapterPosition()).getCombinedId());
+                    clickListener.onClick(userList.get(getAdapterPosition()).getSenderId(), userList.get(getAdapterPosition()).getReceiverId(), userList.get(getAdapterPosition()).getCombinedId(), userList.get(getAdapterPosition()).getOpponentName());
+
+                    /*if (sendReceiverName) {
+                        clickListener.onClick(userList.get(getAdapterPosition()).getSenderId(), userList.get(getAdapterPosition()).getReceiverId(), userList.get(getAdapterPosition()).getCombinedId(), userList.get(getAdapterPosition()).getReceiverName());
+                    } else {
+                        clickListener.onClick(userList.get(getAdapterPosition()).getReceiverId(), userList.get(getAdapterPosition()).getSenderId(), userList.get(getAdapterPosition()).getCombinedId(), userList.get(getAdapterPosition()).getSenderName());
+                    }*/
                 }
             });
         }

@@ -224,7 +224,7 @@ public class CallInitiaterHandler {
                 String userId = user.getId().toString();
                 String userName = "";
                 if (TextUtils.isEmpty(user.getFullName())) {
-                    userName = user.getLogin();
+                    userName = user.getEmail();
                 } else {
                     userName = user.getFullName();
                 }

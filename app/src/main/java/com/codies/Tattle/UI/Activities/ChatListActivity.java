@@ -79,7 +79,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
 
     public static final int PERMISSIONS_REQUEST_READ_CONTACTS = 1;
     private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 1;
-    public static final String TAG = "MAIN";
+    public static final String TAG = "ChatListActivity";
     RecyclerView recyclerView;
     CircularImageView profileBt;
     ImageButton logoutBt;
@@ -127,7 +127,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         users = new ArrayList<>();
         chatLists = new ArrayList<>();
         recyclerView = findViewById(R.id.chatsRVVV);
-        chatsAdapter = new ChatListAdapter(this, this);
+        chatsAdapter = new ChatListAdapter(this, this,mAuth.getUid());
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(chatsAdapter);
         coordinatorLayout = (ConstraintLayout) findViewById(R.id.frameLayout4);
@@ -135,6 +135,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         if (!isUserSignedIn()) {
             logOutFromQuickblox();
         }
+        Log.i(TAG, "onCreate: " + sharedPrefsHelper.getQbUser().toString());
 
         startLoginService();
         getCurrentUserData();
@@ -305,8 +306,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
                 chatLists.clear();
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     ChatList chatList = dataSnapshot.getValue(ChatList.class);
-                    Log.i(TAG, "onDataChange: " + chatList.getSenderName());
-                    Log.i(TAG, "onDataChange: "+chatList.getLastMessage());
                     chatLists.add(chatList);
                 }
                 chatsAdapter.setList(chatLists);
@@ -515,14 +514,14 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         }
     }
 
-    @Override
+    /*@Override
     public void onClick(String itemId, String name, String profileUrl) {
         Intent intent = new Intent(ChatListActivity.this, ChatActivity.class);
         intent.putExtra("userId", name);
         intent.putExtra("name", itemId);
         intent.putExtra("image", profileUrl);
         startActivity(intent);
-    }
+    }*/
 
     public boolean isUserSignedIn() {
         FirebaseUser user = mAuth.getCurrentUser();
@@ -532,4 +531,24 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         return true;
     }
 
+    @Override
+    public void onClick(String senderId, String receiverId, String combinedId,String nameToDisplay) {
+        Intent intent = new Intent(ChatListActivity.this, ChatActivity.class);
+        if (senderId.equals(mAuth.getUid())) {
+            intent.putExtra("senderId", senderId);
+            intent.putExtra("receiverId", receiverId);
+            intent.putExtra("combinedId", combinedId);
+        } else {
+            intent.putExtra("senderId", receiverId);
+            intent.putExtra("receiverId", senderId);
+            intent.putExtra("combinedId", combinedId);
+        }
+
+        intent.putExtra("nameToDisplay", nameToDisplay);
+
+        Log.i(TAG, "onClick: sender = " + senderId);
+        Log.i(TAG, "onClick: receiver = " + receiverId);
+        Log.i(TAG, "onClick: name to display = " + nameToDisplay);
+        startActivity(intent);
+    }
 }

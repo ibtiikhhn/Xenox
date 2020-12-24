@@ -1,9 +1,7 @@
 package com.codies.Tattle.UI.Activities;
 
 import android.Manifest;
-import android.app.NotificationManager;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -23,7 +21,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -77,25 +74,21 @@ public class ChatActivity extends AppCompatActivity {
     List<Chat> chatList;
     SharedPrefs sharedPrefs;
     CircularImageView profileIMG;
-    TextView name;
+    TextView receiverName;
     AppCompatImageView imageView;
     DatabaseReference reference;
-    User globalUser;
+    User receiverUser;
+    User senderUser;
+
     String senderId;
     String receiverId;
     FirebaseAuth mAuth;
     String combinedId;
     String userEmail;
-    String uploadImgURL="";
+    String uploadImgURL = "";
     CallInitiaterHandler callInitiaterHandler;
     QBUser opponentUser;
     StorageReference storageReference;
-
-    private NotificationManager mNotifyManager;
-    private NotificationCompat.Builder mBuilder;
-    int id = 1;
-
-    boolean chatsLoaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,21 +98,23 @@ public class ChatActivity extends AppCompatActivity {
         text = findViewById(R.id.messageET);
         sharedPrefs = SharedPrefs.getInstance(this);
         profileIMG = findViewById(R.id.toolbarIMG);
-        name = findViewById(R.id.toolbarName);
+        receiverName = findViewById(R.id.toolbarName);
         imageView = findViewById(R.id.backBT);
         audioCall = findViewById(R.id.chat_audioCallBt);
         videoCall = findViewById(R.id.chat_videoCallBt);
         imageChooser = findViewById(R.id.imageChooserIV);
 
-        mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mBuilder = new NotificationCompat.Builder(ChatActivity.this);
-
         storageReference = FirebaseStorage.getInstance().getReference("ChatImages");
         mAuth = FirebaseAuth.getInstance();
-        Intent intent = getIntent();
-        receiverId = intent.getStringExtra("userId");
-        combinedId = intent.getStringExtra("combinedId");
         senderId = mAuth.getCurrentUser().getUid();
+        Intent intent = getIntent();
+        if (intent.getBooleanExtra("fromSearch", false)) {
+            receiverId = intent.getStringExtra("userId");
+            combinedId = setOneToOneChat(senderId, receiverId);
+        } else {
+            receiverId = intent.getStringExtra("receiverId");
+            combinedId = intent.getStringExtra("combinedId");
+        }
         chatList = new ArrayList<>();
         messageAdapterUser = new MessageAdapter(this, senderId, chatList);
         recyclerView = findViewById(R.id.chatRV);
@@ -129,6 +124,7 @@ public class ChatActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(messageAdapterUser);
         getReceiverUserData(receiverId);
+        getSenderUserData();
         readMessages();
         callInitiaterHandler = new CallInitiaterHandler(getApplicationContext(), ChatActivity.this);
 
@@ -188,16 +184,19 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    public void sendMessage(String message,boolean isImage) {
+    public void sendMessage(String message, boolean isImage) {
         Chat chat = new Chat(senderId, receiverId, message, isImage);
-        Log.i(TAG, "sendMessage: sender " + senderId);
-        Log.i(TAG, "sendMessage: receiver " + receiverId);
-        reference.child("Messages").child(setOneToOneChat(senderId, receiverId)).push().setValue(chat);
-        ChatList chatList = new ChatList(globalUser.getName(), globalUser.getImageUrl(), setOneToOneChat(senderId, receiverId), message, senderId, receiverId);
-        reference.child("UserChatList").child(mAuth.getCurrentUser().getUid()).child(setOneToOneChat(senderId,receiverId)).setValue(chatList).addOnSuccessListener(new OnSuccessListener<Void>() {
+        Log.i(TAG, "sendMessage: sender id = " + senderId);
+        Log.i(TAG, "sendMessage: receiver id = " + receiverId);
+        reference.child("Messages").child(combinedId).push().setValue(chat);
+        ChatList currentUserChatlist = new ChatList(receiverUser.getName(), receiverUser.getImageUrl(), senderId, receiverId, combinedId,message);
+        ChatList opponentUserChatlist = new ChatList(senderUser.getName(), senderUser.getImageUrl(), senderId, receiverId, combinedId,message);
+
+//            ChatList chatList = new ChatList(senderUser.getName(), senderUser.getImageUrl(), senderUser.getUserId(), receiverUser.getName(), receiverUser.getImageUrl(), receiverUser.getUserId(), combinedId, message);
+        reference.child("UserChatList").child(mAuth.getCurrentUser().getUid()).child(combinedId).setValue(currentUserChatlist).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                reference.child("UserChatList").child(receiverId).child(setOneToOneChat(senderId,receiverId)).setValue(chatList).addOnSuccessListener(new OnSuccessListener<Void>() {
+                reference.child("UserChatList").child(receiverId).child(combinedId).setValue(opponentUserChatlist).addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
                         Log.i(TAG, "onSuccess: image msg ma b send ho gye ");
@@ -205,33 +204,14 @@ public class ChatActivity extends AppCompatActivity {
                 });
             }
         });
+
+
     }
 
+
     public void readMessages() {
-        /*reference.child("Messages").child(setOneToOneChat(senderId, receiverId)).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                chatList.clear();
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    Chat chat = dataSnapshot.getValue(Chat.class);
-                    if (chat != null) {
-                        if (!chatsLoaded) {
-                            chatList.add(chat);
-                            messageAdapterUser.notifyDataSetChanged();
-                        }
-                    }
-                }
-                chatsLoaded = true;
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.i(TAG, "onCancelled: " + error.getMessage());
-            }
-        });*/
-
-        if (setOneToOneChat(senderId, receiverId) != null) {
-            reference.child("Messages").child(setOneToOneChat(senderId, receiverId)).addChildEventListener(new ChildEventListener() {
+        if (combinedId != null && !combinedId.isEmpty()) {
+            reference.child("Messages").child(combinedId).addChildEventListener(new ChildEventListener() {
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                     Chat chat = snapshot.getValue(Chat.class);
@@ -258,7 +238,38 @@ public class ChatActivity extends AppCompatActivity {
                 public void onCancelled(@NonNull DatabaseError error) {
 
                 }
-            });        }
+            });
+        } else {
+            String myCombinedId = setOneToOneChat(senderId, receiverId);
+            reference.child("Messages").child(myCombinedId).addChildEventListener(new ChildEventListener() {
+                @Override
+                public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                    Chat chat = snapshot.getValue(Chat.class);
+                    chatList.add(chat);
+                    messageAdapterUser.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                }
+
+                @Override
+                public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+                }
+
+                @Override
+                public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+        }
 
 
     }
@@ -274,49 +285,18 @@ public class ChatActivity extends AppCompatActivity {
         callInitiaterHandler.clearAppNotifications();
     }
 
-    public void getReceiverUserData(String receiverId) {
-        if (mAuth.getCurrentUser() != null) {
-            reference.child("users").addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                        User user = dataSnapshot.getValue(User.class);
-                        if (user != null) {
-                            if (user.getUserId().equals(receiverId)) {
-                                globalUser = user;
-                                name.setText(user.getName());
-                                userEmail = user.getEmail();
-                                opponentUser = getUserByEmail(userEmail);
-                                if (globalUser.getImageUrl() != null) {
-                                    Glide.with(getApplicationContext()).load(globalUser.getImageUrl()).into(profileIMG);
-                                }
-                                Log.i(TAG, "onDataChange: "+user.getName());
-                                //user ki image agr set krni ho to yaha py kro
-                            }
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-
-                }
-            });
-        }
-    }
-
     public QBUser getUserByEmail(String email) {
         Log.i(TAG, "getUserByEmail: " + email);
         final QBUser[] qbUserr = new QBUser[1];
         QBUsers.getUserByEmail(email).performAsync(new QBEntityCallback<QBUser>() {
             @Override
             public void onSuccess(QBUser qbUser, Bundle bundle) {
-                Log.i(TAG, "onSuccess: "+qbUser.toString());
+                Log.i(TAG, "onSuccess: " + qbUser.toString());
                 if (qbUser != null) {
                     opponentUser = qbUser;
                     qbUserr[0] = opponentUser;
                 }
-                Log.i(TAG, "onSuccess: "+"opponent user is null");
+                Log.i(TAG, "onSuccess: " + "opponent user is null");
             }
 
             @Override
@@ -335,11 +315,10 @@ public class ChatActivity extends AppCompatActivity {
         int compare = senderId.compareTo(receiverId);
         if (compare < 0) {
             //a is smaller
-            return senderId +"_"+ receiverId;
-        }
-        else /*if (compare > 0) */{
+            return senderId + "_" + receiverId;
+        } else /*if (compare > 0) */ {
             //a is larger
-            return receiverId +"_"+ senderId;
+            return receiverId + "_" + senderId;
         } /*else return null;*/
     }
 
@@ -403,7 +382,7 @@ public class ChatActivity extends AppCompatActivity {
                     public void onSuccess(Uri uri) {
                         Log.i(TAG, "onSuccess: photo upload ho k url b agya");
                         uploadImgURL = uri.toString();
-                        sendMessage(uploadImgURL,true);
+                        sendMessage(uploadImgURL, true);
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
@@ -428,4 +407,59 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    public void getSenderUserData() {
+        if (mAuth.getCurrentUser() != null) {
+            reference.child("users").child(mAuth.getCurrentUser().getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    User user = snapshot.getValue(User.class);
+                    if (user != null) {
+                        senderUser = user;
+                        /*if (user.getImageUrl() != null) {
+                            Glide.with(ChatListActivity.this).load(user.getImageUrl()).into(profileBt);
+                        }*/
+                    } else {
+                        Log.i(TAG, "onDataChange: user is null");
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.i(TAG, "onCancelled: " + error.getDetails());
+                }
+            });
+        }
+    }
+
+
+    public void getReceiverUserData(String receiverId) {
+        if (mAuth.getCurrentUser() != null) {
+            reference.child("users").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                        User user = dataSnapshot.getValue(User.class);
+                        if (user != null) {
+                            if (user.getUserId().equals(receiverId)) {
+                                receiverUser = user;
+                                receiverName.setText(user.getName());
+                                userEmail = user.getEmail();
+                                opponentUser = getUserByEmail(userEmail);
+                                if (receiverUser.getImageUrl() != null) {
+                                    Glide.with(getApplicationContext()).load(receiverUser.getImageUrl()).into(profileIMG);
+                                }
+                                Log.i(TAG, "onDataChange: " + user.getName());
+                                //user ki image agr set krni ho to yaha py kro
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+        }
+    }
 }

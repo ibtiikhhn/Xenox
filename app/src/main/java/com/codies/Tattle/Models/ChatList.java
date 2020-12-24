@@ -1,56 +1,40 @@
 package com.codies.Tattle.Models;
 
 public class ChatList {
-    String senderName;
-    String senderIMG;
-    String combinedId;
-    String lastMessage;
+
+    String opponentName;
+    String opponentIMG;
     String senderId;
     String receiverId;
+    String combinedId;
+    String lastMessage;
 
     public ChatList() {
-
     }
 
-    public ChatList(String senderName, String senderIMG, String combinedId, String lastMessage, String senderId, String receiverId) {
-        this.senderName = senderName;
-        this.senderIMG = senderIMG;
-        this.combinedId = combinedId;
-        this.lastMessage = lastMessage;
+    public ChatList(String opponentName, String opponentIMG, String senderId, String receiverId, String combinedId, String lastMessage) {
+        this.opponentName = opponentName;
+        this.opponentIMG = opponentIMG;
         this.senderId = senderId;
         this.receiverId = receiverId;
-    }
-
-    public String getSenderName() {
-        return senderName;
-    }
-
-    public void setSenderName(String senderName) {
-        this.senderName = senderName;
-    }
-
-    public String getSenderIMG() {
-        return senderIMG;
-    }
-
-    public void setSenderIMG(String senderIMG) {
-        this.senderIMG = senderIMG;
-    }
-
-    public String getCombinedId() {
-        return combinedId;
-    }
-
-    public void setCombinedId(String combinedId) {
         this.combinedId = combinedId;
-    }
-
-    public String getLastMessage() {
-        return lastMessage;
-    }
-
-    public void setLastMessage(String lastMessage) {
         this.lastMessage = lastMessage;
+    }
+
+    public String getOpponentName() {
+        return opponentName;
+    }
+
+    public void setOpponentName(String opponentName) {
+        this.opponentName = opponentName;
+    }
+
+    public String getOpponentIMG() {
+        return opponentIMG;
+    }
+
+    public void setOpponentIMG(String opponentIMG) {
+        this.opponentIMG = opponentIMG;
     }
 
     public String getSenderId() {
@@ -69,15 +53,31 @@ public class ChatList {
         this.receiverId = receiverId;
     }
 
+    public String getCombinedId() {
+        return combinedId;
+    }
+
+    public void setCombinedId(String combinedId) {
+        this.combinedId = combinedId;
+    }
+
+    public String getLastMessage() {
+        return lastMessage;
+    }
+
+    public void setLastMessage(String lastMessage) {
+        this.lastMessage = lastMessage;
+    }
+
     @Override
     public String toString() {
         return "ChatList{" +
-                "senderName='" + senderName + '\'' +
-                ", senderIMG='" + senderIMG + '\'' +
-                ", combinedId='" + combinedId + '\'' +
-                ", lastMessage='" + lastMessage + '\'' +
+                "opponentName='" + opponentName + '\'' +
+                ", opponentIMG='" + opponentIMG + '\'' +
                 ", senderId='" + senderId + '\'' +
                 ", receiverId='" + receiverId + '\'' +
+                ", combinedId='" + combinedId + '\'' +
+                ", lastMessage='" + lastMessage + '\'' +
                 '}';
     }
 }
