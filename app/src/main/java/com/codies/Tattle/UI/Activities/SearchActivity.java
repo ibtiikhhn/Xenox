@@ -103,19 +103,24 @@ public class SearchActivity extends BaseActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 searchUserList.clear();
-                Log.i(TAG, "onDataChange: "+snapshot.getChildrenCount());
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    User user = dataSnapshot.getValue(User.class);
-                    if (user != null) {
-                        if (!user.getEmail().equals(getCurrentUserEmail())) {
-                            searchUserList.add(user);
-                            searchProgress.setVisibility(View.INVISIBLE);
-                        }else{
-                            Toast.makeText(SearchActivity.this, "You Searched Your Own Name!", Toast.LENGTH_SHORT).show();
+                if (snapshot.getChildrenCount() > 0) {
+                    for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                        User user = dataSnapshot.getValue(User.class);
+                        if (user != null) {
+                            if (!user.getEmail().equals(getCurrentUserEmail())) {
+                                searchUserList.add(user);
+                            } else {
+                                Toast.makeText(SearchActivity.this, "You Searched Your Own Name!", Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }
+                    searchProgress.setVisibility(View.INVISIBLE);
+                    searchAdapter.setList(searchUserList);
+                } else {
+                    Toast.makeText(SearchActivity.this, "User Not Found!!", Toast.LENGTH_SHORT).show();
+                    searchProgress.setVisibility(View.INVISIBLE);
                 }
-                searchAdapter.setList(searchUserList);
+
             }
 
             @Override

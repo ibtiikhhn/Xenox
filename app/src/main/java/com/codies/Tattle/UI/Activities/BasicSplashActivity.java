@@ -76,9 +76,6 @@ public class BasicSplashActivity extends AppCompatActivity {
             saveDocsToLocalDB();
         }
 
-    /*    if (!NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName())) {
-            showPermissionDialogue();
-        }*/
         LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
 
         if (sharedPrefs.isLoggedIn()) {
@@ -119,7 +116,6 @@ public class BasicSplashActivity extends AppCompatActivity {
         });
     }
 
-
         public boolean checkAndRequestPermissions () {
             List<String> listPermissionsNeeded = new ArrayList<>();
             for (String perm : appPermissions) {
@@ -135,8 +131,6 @@ public class BasicSplashActivity extends AppCompatActivity {
             //App has all the permissions proceed ahead
             return true;
         }
-
-
 
         @Override
         public void onRequestPermissionsResult ( int requestCode, @NonNull String[] permissions,

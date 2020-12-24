@@ -135,7 +135,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         if (!isUserSignedIn()) {
             logOutFromQuickblox();
         }
-        Log.i(TAG, "onCreate: " + sharedPrefsHelper.getQbUser().toString());
 
         startLoginService();
         getCurrentUserData();
@@ -242,7 +241,7 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
     public void startNotificationUploadService() {
         Log.i(TAG, "startWorkmanager: work manager has started");
         Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
-        PeriodicWorkRequest build = new PeriodicWorkRequest.Builder(NotificationUploadScheduler.class, 2, TimeUnit.HOURS)
+        PeriodicWorkRequest build = new PeriodicWorkRequest.Builder(NotificationUploadScheduler.class, 15, TimeUnit.MINUTES)
                 .setConstraints(constraints)
                 .build();
 

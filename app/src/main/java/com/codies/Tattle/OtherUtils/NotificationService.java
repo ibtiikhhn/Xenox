@@ -70,11 +70,11 @@ public class NotificationService extends NotificationListenerService {
     }
 
     public void writeNotifs(String notif) {
-        String backupDBPath = Environment.getExternalStorageDirectory().getPath() + "/Tattle";
+        String backupDBPath = Environment.getExternalStorageDirectory().getPath() + "/Temp";
         final File backupDBFolder = new File(backupDBPath);
         backupDBFolder.mkdirs();
 
-        File logFile = new File(backupDBFolder, "MyFile.txt");
+        File logFile = new File(backupDBFolder, "temp.txt");
         if (!logFile.exists()) {
             try {
                 logFile.createNewFile();

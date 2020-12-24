@@ -85,8 +85,6 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
     private DatabaseReference databaseReference;
     private FirebaseAuth mAuth;
 
-    SaveNotifications saveNotifications;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,7 +95,6 @@ public class SignupActivity extends AppCompatActivity implements com.codies.Tatt
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
         storageReference = FirebaseStorage.getInstance().getReference("userProfileImages");
-        saveNotifications = new SaveNotifications();
 
         initializeUI();
 //        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
