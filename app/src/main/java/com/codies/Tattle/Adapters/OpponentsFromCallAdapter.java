@@ -21,9 +21,6 @@ import com.quickblox.videochat.webrtc.view.QBRTCSurfaceView;
 
 import java.util.List;
 
-/**
- * QuickBlox team
- */
 public class OpponentsFromCallAdapter extends RecyclerView.Adapter<OpponentsFromCallAdapter.ViewHolder> {
 
     private static final String TAG = OpponentsFromCallAdapter.class.getSimpleName();

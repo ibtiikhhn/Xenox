@@ -29,9 +29,6 @@ import com.quickblox.videochat.webrtc.QBRTCConfig;
 
 import org.jivesoftware.smackx.ping.PingFailedListener;
 
-/**
- * QuickBlox team
- */
 public class LoginService extends Service {
     private static final String TAG = "LOGINSERVICE";
 

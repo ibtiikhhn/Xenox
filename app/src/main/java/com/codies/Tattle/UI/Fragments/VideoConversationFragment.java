@@ -54,9 +54,6 @@ import java.util.List;
 import java.util.Map;
 
 
-/**
- * QuickBlox team
- */
 public class VideoConversationFragment extends BaseConversationFragment implements Serializable,
         QBRTCClientVideoTracksCallbacks<QBRTCSession>, QBRTCSessionStateCallback<QBRTCSession>,
         QBRTCSessionEventsCallback, OpponentsFromCallAdapter.OnAdapterEventListener {

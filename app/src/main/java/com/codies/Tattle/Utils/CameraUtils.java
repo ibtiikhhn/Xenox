@@ -3,9 +3,6 @@ package com.codies.Tattle.Utils;
 import android.hardware.Camera;
 import android.util.Log;
 
-/**
- * QuickBlox team
- */
 public class CameraUtils {
 
     private static final String TAG = com.codies.Tattle.Utils.CameraUtils.class.getSimpleName();

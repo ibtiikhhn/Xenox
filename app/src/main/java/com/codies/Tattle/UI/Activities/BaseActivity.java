@@ -19,9 +19,7 @@ import com.codies.Tattle.Utils.ErrorUtils;
 import com.codies.Tattle.Utils.QBResRequestExecutor;
 import com.codies.Tattle.Utils.SharedPrefsHelper;
 
-/**
- * QuickBlox team
- */
+
 public abstract class BaseActivity extends AppCompatActivity {
 
     protected ActionBar actionBar;

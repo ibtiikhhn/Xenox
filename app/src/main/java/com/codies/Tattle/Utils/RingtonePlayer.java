@@ -10,9 +10,6 @@ import android.util.Log;
 
 import java.io.IOException;
 
-/**
- * QuickBlox team
- */
 public class RingtonePlayer {
 
     private static final String TAG = com.codies.Tattle.Utils.RingtonePlayer.class.getSimpleName();

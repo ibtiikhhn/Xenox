@@ -37,9 +37,6 @@ import com.quickblox.videochat.webrtc.QBRTCTypes;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * QuickBlox team
- */
 public class OpponentsActivity extends BaseActivity {
     private static final String TAG = OpponentsActivity.class.getSimpleName();
 

@@ -11,9 +11,6 @@ import com.quickblox.videochat.webrtc.QBRTCMediaConfig;
 
 import java.util.List;
 
-/**
- * QuickBlox team
- */
 public class SettingsUtil {
 
     private static final String TAG = SettingsUtil.class.getSimpleName();

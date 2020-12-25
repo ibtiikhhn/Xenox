@@ -1,12 +1,5 @@
 package com.codies.Tattle.Models;
 
-/**
- * author CodeBoy722
- *
- * Custom Class that holds information of a folder containing images
- * on the device external storage, used to populate our RecyclerView of
- * picture folders
- */
 public class imageFolder implements Comparable{
 
     private String path;

@@ -40,9 +40,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * QuickBlox team
- */
 public class IncomeCallFragment extends Fragment implements Serializable, View.OnClickListener {
     private static final String TAG = IncomeCallFragment.class.getSimpleName();
 
