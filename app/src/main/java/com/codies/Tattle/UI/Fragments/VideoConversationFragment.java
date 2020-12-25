@@ -796,7 +796,7 @@ public class VideoConversationFragment extends BaseConversationFragment implemen
                 switchCamera(item);
                 return true;
             case R.id.screen_share:
-                startScreenSharing();
+//                startScreenSharing();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
