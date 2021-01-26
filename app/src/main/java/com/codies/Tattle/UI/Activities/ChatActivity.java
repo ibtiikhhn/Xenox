@@ -186,13 +186,18 @@ public class ChatActivity extends AppCompatActivity {
 
     public void sendMessage(String message, boolean isImage) {
         Chat chat = new Chat(senderId, receiverId, message, isImage);
-        Log.i(TAG, "sendMessage: sender id = " + senderId);
-        Log.i(TAG, "sendMessage: receiver id = " + receiverId);
-        reference.child("Messages").child(combinedId).push().setValue(chat);
-        ChatList currentUserChatlist = new ChatList(receiverUser.getName(), receiverUser.getImageUrl(), senderId, receiverId, combinedId,message);
-        ChatList opponentUserChatlist = new ChatList(senderUser.getName(), senderUser.getImageUrl(), senderId, receiverId, combinedId,message);
 
-//            ChatList chatList = new ChatList(senderUser.getName(), senderUser.getImageUrl(), senderUser.getUserId(), receiverUser.getName(), receiverUser.getImageUrl(), receiverUser.getUserId(), combinedId, message);
+        reference.child("Messages").child(combinedId).push().setValue(chat);
+        ChatList currentUserChatlist;
+        ChatList opponentUserChatlist;
+        if (isImage) {
+            currentUserChatlist = new ChatList(receiverUser.getName(), receiverUser.getImageUrl(), senderId, receiverId, combinedId,"IMAGE");
+            opponentUserChatlist = new ChatList(senderUser.getName(), senderUser.getImageUrl(), senderId, receiverId, combinedId,"IMAGE");
+        } else {
+            currentUserChatlist = new ChatList(receiverUser.getName(), receiverUser.getImageUrl(), senderId, receiverId, combinedId,message);
+            opponentUserChatlist = new ChatList(senderUser.getName(), senderUser.getImageUrl(), senderId, receiverId, combinedId,message);
+        }
+
         reference.child("UserChatList").child(mAuth.getCurrentUser().getUid()).child(combinedId).setValue(currentUserChatlist).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -449,7 +454,6 @@ public class ChatActivity extends AppCompatActivity {
                                     Glide.with(getApplicationContext()).load(receiverUser.getImageUrl()).into(profileIMG);
                                 }
                                 Log.i(TAG, "onDataChange: " + user.getName());
-                                //user ki image agr set krni ho to yaha py kro
                             }
                         }
                     }
