@@ -5,10 +5,18 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        release {
+            storeFile file('C:\\Users\\Batman\\AndroidStudioProjects\\Xenox\\tattlerelease.jks')
+            storePassword 'allah1234'
+            keyAlias 'key0'
+            keyPassword 'allah1234'
+        }
+    }
     compileSdkVersion 29
 
     defaultConfig {
-        applicationId "com.codies.xenox"
+        applicationId "com.globalsolutions.xenox"
         minSdkVersion 21
         targetSdkVersion 29
         versionCode 1

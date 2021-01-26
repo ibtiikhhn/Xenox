@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:keepScreenOn="true"
     android:orientation="vertical"
-    tools:context="com.codies.Tattle.UI.Activities.CallActivity">
+    tools:context="com.globalsolutions.Tattle.UI.Activities.CallActivity">
 
     <FrameLayout
         android:id="@+id/fragment_container"

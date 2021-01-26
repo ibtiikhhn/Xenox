@@ -1,34 +1,42 @@
 {
   "project_info": {
-    "project_number": "55215625724",
-    "firebase_url": "https://xenox-3bf17.firebaseio.com",
-    "project_id": "xenox-3bf17",
-    "storage_bucket": "xenox-3bf17.appspot.com"
+    "project_number": "531083769053",
+    "firebase_url": "https://tattle-d5ecc-default-rtdb.firebaseio.com",
+    "project_id": "tattle-d5ecc",
+    "storage_bucket": "tattle-d5ecc.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:55215625724:android:686fa33cc5b6a8c8f38e79",
+        "mobilesdk_app_id": "1:531083769053:android:9360876a33d3aaf7261734",
         "android_client_info": {
-          "package_name": "com.codies.xenox"
+          "package_name": "com.globalsolutions.xenox"
         }
       },
       "oauth_client": [
         {
-          "client_id": "55215625724-cg4lmgnqdrrvtph269q43im410fc8333.apps.googleusercontent.com",
+          "client_id": "531083769053-vlkute1ipcu5vnhlku0vagca4fdb6vme.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.globalsolutions.xenox",
+            "certificate_hash": "197284519d05fa34c38e66300edb5522234cf06d"
+          }
+        },
+        {
+          "client_id": "531083769053-lo2s72rtp2c776tosp0tekd8udbtkuv3.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCRYiPzNvSBG_8vqqJtlMd2_2oWbm1WTX4"
+          "current_key": "AIzaSyBZv5-XRX4XR0SaEGYpHqS7hMHfVl9Z_v8"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "55215625724-cg4lmgnqdrrvtph269q43im410fc8333.apps.googleusercontent.com",
+              "client_id": "531083769053-lo2s72rtp2c776tosp0tekd8udbtkuv3.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
