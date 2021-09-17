@@ -5,6 +5,8 @@ plugins {
 }
 
 android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
     signingConfigs {
         release {
             storeFile file('C:\\Users\\Batman\\AndroidStudioProjects\\Xenox\\tattlerelease.jks')
@@ -13,15 +15,17 @@ android {
             keyPassword 'allah1234'
         }
     }
-    compileSdkVersion 29
+
 
     defaultConfig {
-        applicationId "com.globalsolutions.xenox"
+        applicationId "com.globalsolutions.Tattle"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
+        archivesBaseName = "Tattle" + versionName
+
 
         javaCompileOptions {
             annotationProcessorOptions {

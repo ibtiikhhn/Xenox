@@ -164,5 +164,13 @@ public class SharedPrefs {
         return outputMap;
     }
 
+    public void setUniqueId(String value) {
+        mSharedPreferencesEditor.putString("uniqueId", value);
+        mSharedPreferencesEditor.commit();
+    }
+
+    public String getUniqueId() {
+        return mSharedPreferences.getString("uniqueId", "notFound");
+    }
 
 }

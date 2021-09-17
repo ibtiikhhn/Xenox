@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.globalsolutions.Tattle.Models.User;
+import com.globalsolutions.Tattle.OtherUtils.SharedPrefs;
 import com.globalsolutions.Tattle.R;
 import com.globalsolutions.Tattle.Utils.App;
 import com.globalsolutions.Tattle.Utils.Consts;
@@ -55,11 +56,6 @@ public class SignupActivity extends AppCompatActivity implements com.globalsolut
     public static final String MESSAGE_STATUS = "message_status";
     public static final int PERMISSIONS_REQUEST_CODE = 1240;
 
-    String[] appPermissions = {
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE
-    };
-
     private EditText emailTV, passwordTV,nametv;
     private Button regBtn;
     private TextView alreadyAccout;
@@ -80,6 +76,8 @@ public class SignupActivity extends AppCompatActivity implements com.globalsolut
 
     private CircularImageView selectPhotoBT;
 
+    SharedPrefs sharedPrefs;
+
     FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
     private FirebaseAuth mAuth;
@@ -88,7 +86,7 @@ public class SignupActivity extends AppCompatActivity implements com.globalsolut
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
-
+        sharedPrefs = SharedPrefs.getInstance(this);
         requestExecutor = App.getInstance().getQbResRequestExecutor();
         mAuth = FirebaseAuth.getInstance();
         firebaseDatabase = FirebaseDatabase.getInstance();
@@ -169,7 +167,7 @@ public class SignupActivity extends AppCompatActivity implements com.globalsolut
                                 if (photoSelected && imageUploading) {
                                     Toast.makeText(SignupActivity.this, "Wait, uploading photo!", Toast.LENGTH_SHORT).show();
                                 } else {
-                                    user = new User(mAuth.getUid(), name, email, imageUrl, password);
+                                    user = new User(mAuth.getUid(), name, email, imageUrl, password,sharedPrefs.getUniqueId());
                                     signUpOnQuickblox(email, DEFAULT_QB_USER_PASSWORD);
                                 }
                             }

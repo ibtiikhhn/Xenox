@@ -1,42 +1,50 @@
 {
   "project_info": {
-    "project_number": "531083769053",
-    "firebase_url": "https://tattle-d5ecc-default-rtdb.firebaseio.com",
-    "project_id": "tattle-d5ecc",
-    "storage_bucket": "tattle-d5ecc.appspot.com"
+    "project_number": "55215625724",
+    "firebase_url": "https://xenox-3bf17.firebaseio.com",
+    "project_id": "xenox-3bf17",
+    "storage_bucket": "xenox-3bf17.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:531083769053:android:9360876a33d3aaf7261734",
+        "mobilesdk_app_id": "1:55215625724:android:587e888dcd9eca56f38e79",
         "android_client_info": {
-          "package_name": "com.globalsolutions.xenox"
+          "package_name": "com.globalsolutions.Tattle"
         }
       },
       "oauth_client": [
         {
-          "client_id": "531083769053-vlkute1ipcu5vnhlku0vagca4fdb6vme.apps.googleusercontent.com",
+          "client_id": "55215625724-24k98m6482eomdvg7maun7so1nl1a8io.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.globalsolutions.xenox",
-            "certificate_hash": "197284519d05fa34c38e66300edb5522234cf06d"
+            "package_name": "com.globalsolutions.Tattle",
+            "certificate_hash": "b098c4b101e15cc40c6981b3abcdb0c29860ca38"
           }
         },
         {
-          "client_id": "531083769053-lo2s72rtp2c776tosp0tekd8udbtkuv3.apps.googleusercontent.com",
+          "client_id": "55215625724-vp372gv629h31vf35asf6fn7v416kpfr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.globalsolutions.Tattle",
+            "certificate_hash": "f5fb057850b28ed93a12b04983517e212d682d6e"
+          }
+        },
+        {
+          "client_id": "55215625724-cg4lmgnqdrrvtph269q43im410fc8333.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBZv5-XRX4XR0SaEGYpHqS7hMHfVl9Z_v8"
+          "current_key": "AIzaSyCRYiPzNvSBG_8vqqJtlMd2_2oWbm1WTX4"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "531083769053-lo2s72rtp2c776tosp0tekd8udbtkuv3.apps.googleusercontent.com",
+              "client_id": "55215625724-cg4lmgnqdrrvtph269q43im410fc8333.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

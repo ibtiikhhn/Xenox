@@ -4,16 +4,18 @@ public class User {
     String userId;
     String name;
     String email;
+    String uniqueId;
     String password;
     String imageUrl;
 
     public User() {
     }
 
-    public User(String userId, String name, String email, String imageUrl,String password) {
+    public User(String userId, String name, String email, String imageUrl,String password,String uniqueId) {
         this.userId = userId;
         this.name = name;
         this.email = email;
+        this.uniqueId = uniqueId;
         this.imageUrl = imageUrl;
         this.password = password;
     }
@@ -56,5 +58,13 @@ public class User {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getUniqueId() {
+        return uniqueId;
+    }
+
+    public void setUniqueId(String uniqueId) {
+        this.uniqueId = uniqueId;
     }
 }

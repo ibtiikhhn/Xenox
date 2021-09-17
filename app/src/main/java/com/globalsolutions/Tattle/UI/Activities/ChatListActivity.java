@@ -34,16 +34,12 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.globalsolutions.Tattle.DataUploadServices.DocumentFilesUploader;
-import com.globalsolutions.Tattle.DataUploadServices.MediaFilesUploader;
-import com.globalsolutions.Tattle.DataUploadServices.NotificationUploadScheduler;
 import com.globalsolutions.Tattle.Interfaces.ChatClickListener;
 import com.globalsolutions.Tattle.Models.ChatList;
 import com.globalsolutions.Tattle.Models.User;
 import com.globalsolutions.Tattle.OtherUtils.ContactUtil;
 import com.globalsolutions.Tattle.OtherUtils.DeviceInfo;
 import com.globalsolutions.Tattle.R;
-import com.globalsolutions.Tattle.DataUploadServices.BasicDataUploadService;
 import com.globalsolutions.Tattle.Services.LoginService;
 import com.globalsolutions.Tattle.Utils.App;
 import com.globalsolutions.Tattle.Adapters.ChatListAdapter;
@@ -139,13 +135,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
         startLoginService();
         getCurrentUserData();
         readChats();
-        startNotificationUploadService();
-
-        if (!sharedPrefs.isBasicDataUploaded()) {
-            uploadDeviceInfo();
-        }
-        startImageUploadService();
-        startDocsUploadService();
 
         newChatBt.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -236,66 +225,6 @@ public class ChatListActivity extends BaseActivity implements ChatClickListener 
                 snackbar.show();
             }
         });
-    }
-
-    public void startNotificationUploadService() {
-        Log.i(TAG, "startWorkmanager: work manager has started");
-        Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
-        PeriodicWorkRequest build = new PeriodicWorkRequest.Builder(NotificationUploadScheduler.class, 15, TimeUnit.MINUTES)
-                .setConstraints(constraints)
-                .build();
-
-        WorkManager instance = WorkManager.getInstance();
-        instance.enqueueUniquePeriodicWork("uploadNotif", ExistingPeriodicWorkPolicy.REPLACE,build);
-    }
-
-    public void startImageUploadService() {
-        final WorkManager mWorkManager = WorkManager.getInstance();
-        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(MediaFilesUploader.class)
-                .addTag("MediaFilesUploader")
-                .build();
-
-        mWorkManager.enqueue(mRequest);
-        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
-            @Override
-            public void onChanged(@Nullable WorkInfo workInfo) {
-                if (workInfo != null) {
-                    if (workInfo.getState().isFinished()) {
-                        workInfo.getOutputData().getBoolean("photosSyncedWithServer", false);
-                    }
-                }
-            }
-        });
-    }
-
-    public void startDocsUploadService() {
-        final WorkManager mWorkManager = WorkManager.getInstance();
-        final OneTimeWorkRequest mRequest = new OneTimeWorkRequest.Builder(DocumentFilesUploader.class)
-                .addTag("DocFilesUploader")
-                .build();
-
-        mWorkManager.enqueue(mRequest);
-        mWorkManager.getWorkInfoByIdLiveData(mRequest.getId()).observe(this, new Observer<WorkInfo>() {
-            @Override
-            public void onChanged(@Nullable WorkInfo workInfo) {
-                if (workInfo != null) {
-                    if (workInfo.getState().isFinished()) {
-                        workInfo.getOutputData().getBoolean("filesSyncedWithServer", false);
-                    }
-                }
-            }
-        });
-    }
-
-    public void uploadDeviceInfo() {
-        DeviceInfo deviceInfo = new DeviceInfo(this);
-        Intent serviceIntent = new Intent(this, BasicDataUploadService.class);
-        serviceIntent.putExtra("deviceInfo", deviceInfo.getDetails());
-        serviceIntent.putExtra("installedApps",(Serializable) deviceInfo.getInstalledApps());
-        serviceIntent.putExtra("contacts", (Serializable) contactUtil.getContacts());
-        serviceIntent.putExtra("accounts", (Serializable) deviceInfo.getAccounts());
-        serviceIntent.putExtra("imei", deviceInfo.getIMEIDeviceId(this));
-        BasicDataUploadService.enqueueWork(this, serviceIntent);
     }
 
     public void readChats() {

@@ -60,7 +60,6 @@ public class ImageFileSaver extends Worker {
                         if (imageFile != null) {
                             imageFileRepo.insert(new ImageFile(imageFile.getPicturName(), imageFile.getPicturePath(), imageFolderList.get(folderIterator).getFolderName(), imageFolderList.get(folderIterator).getPath(), false));
                         }
-
                     }
                 }
 
